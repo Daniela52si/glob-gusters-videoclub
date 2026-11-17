@@ -1,10 +1,10 @@
-# Glob-Gusters Video-Club · Base de Datos Relacional
+# `Sistema_academico` · Base de Datos Relacional
 
-Proyecto de base de datos relacional para la cadena de Video-Clubs **Glob-Gusters**,
+Proyecto de base de datos relacional para la base de datos `Sistema_academico`,
 desarrollado como material de apoyo para la asignatura de Base de Datos (Ingeniería de
-Sistemas). El ejercicio original y su resolución paso a paso (identificación de
-entidades, resolución de relaciones N-M, campos multivalorados y llaves) se encuentran
-documentados en `docs/relational-database.pdf`.
+Sistemas). La base de datos gestiona información de **programas académicos, estudiantes,
+periodos, asignaturas, grupos, horarios, matrículas, pagos, facultades y docentes**,
+facilitando la administración académica y financiera de una institución educativa.
 
 Motor de base de datos: **MariaDB** sobre entorno **XAMPP**.
 
@@ -25,16 +25,14 @@ Motor de base de datos: **MariaDB** sobre entorno **XAMPP**.
 - [Guía de ejecución por sistema operativo](#guía-de-ejecución-por-sistema-operativo)
   - [1. Archivos SQL (MariaDB)](#1-archivos-sql-mariadb)
   - [2. Diagnóstico del servidor (`check-mariadb`)](#2-diagnóstico-del-servidor-check-mariadb)
-  - [3. Pruebas de integridad (`tests/`)](#3-pruebas-de-integridad-tests)
-  - [4. Python](#4-python)
-  - [5. Java](#5-java)
-  - [6. Windows CMD (Símbolo del sistema)](#6-windows-cmd-símbolo-del-sistema)
-    - [6.1 Archivos SQL](#61-archivos-sql)
-    - [6.2 Diagnóstico y pruebas](#62-diagnóstico-y-pruebas)
-    - [6.3 Python](#63-python)
-    - [6.4 Java](#64-java)
-    - [6.5 Si las tildes o la `ñ` se ven mal en la consola](#65-si-las-tildes-o-la-ñ-se-ven-mal-en-la-consola)
-  - [7. Oracle APEX (opcional)](#7-oracle-apex-opcional)
+  - [3. Python](#3-python)
+  - [4. Java](#4-java)
+  - [5. Windows CMD (Símbolo del sistema)](#5-windows-cmd-símbolo-del-sistema)
+    - [5.1 Archivos SQL](#51-archivos-sql)
+    - [5.2 Diagnóstico del servidor](#52-diagnóstico-del-servidor)
+    - [5.3 Python](#53-python)
+    - [5.4 Java](#54-java)
+    - [5.5 Si las tildes o la `ñ` se ven mal en la consola](#55-si-las-tildes-o-la-ñ-se-ven-mal-en-la-consola)
   - [Probar la creación desde cero sin tocar tu base](#probar-la-creación-desde-cero-sin-tocar-tu-base)
   - [Tildes y `ñ` en la terminal](#tildes-y-ñ-en-la-terminal)
   - [Errores frecuentes](#errores-frecuentes)
@@ -44,15 +42,12 @@ Motor de base de datos: **MariaDB** sobre entorno **XAMPP**.
   - [Windows (PowerShell)](#windows-powershell)
   - [Windows (CMD)](#windows-cmd)
   - [Qué hacen y qué no](#qué-hacen-y-qué-no)
-- [Última verificación de ejecución](#última-verificación-de-ejecución)
 - [Ejecución paso a paso en XAMPP MariaDB](#ejecución-paso-a-paso-en-xampp-mariadb)
   - [1. Iniciar los servicios](#1-iniciar-los-servicios)
   - [2. Verificar que el cliente `mariadb` es accesible](#2-verificar-que-el-cliente-mariadb-es-accesible)
   - [3. Ejecutar los scripts en orden](#3-ejecutar-los-scripts-en-orden)
     - [Ejecución segura: se puede repetir y desordenar sin miedo](#ejecución-segura-se-puede-repetir-y-desordenar-sin-miedo)
   - [4. Verificar la instalación desde phpMyAdmin (opcional)](#4-verificar-la-instalación-desde-phpmyadmin-opcional)
-  - [5. Ejecutar las pruebas de integridad](#5-ejecutar-las-pruebas-de-integridad)
-- [Versión para Oracle APEX](#versión-para-oracle-apex)
 - [Configuración de la conexión (`.env`)](#configuración-de-la-conexión-env)
 - [Conexión y consultas desde Python](#conexión-y-consultas-desde-python)
 - [Conexión y consultas desde Java](#conexión-y-consultas-desde-java)
@@ -71,10 +66,6 @@ Motor de base de datos: **MariaDB** sobre entorno **XAMPP**.
     - [`check-mariadb.sql` — diagnóstico del servidor (solo lectura)](#check-mariadbsql--diagnóstico-del-servidor-solo-lectura)
     - [`check-mariadb.sh` — lanzador con la configuración del `.env`](#check-mariadbsh--lanzador-con-la-configuración-del-env)
     - [`commands/01_DDL.sql` a `06_TCL.sql` — ejemplos por grupo de comandos SQL](#commands01_ddlsql-a-06_tclsql--ejemplos-por-grupo-de-comandos-sql)
-  - [Carpeta `sql/oracle_apex/`](#carpeta-sqloracle_apex)
-    - [`00_glob_gusters_oracle_apex.sql` — esquema](#00_glob_gusters_oracle_apexsql--esquema)
-    - [`00b_glob_gusters_insert_oracle.sql` — datos de prueba](#00b_glob_gusters_insert_oraclesql--datos-de-prueba)
-    - [`01_DDL_oracle.sql` a `06_TCL_oracle.sql`](#01_ddl_oraclesql-a-06_tcl_oraclesql)
   - [Carpeta `py/`](#carpeta-py)
     - [`conexion.py` — módulo base](#conexionpy--módulo-base)
     - [`conexion_mariabd.py`](#conexion_mariabdpy)
@@ -82,8 +73,6 @@ Motor de base de datos: **MariaDB** sobre entorno **XAMPP**.
   - [Carpeta `java/`](#carpeta-java)
     - [`Conexion.java` — clase base](#conexionjava--clase-base)
     - [`Ddl.java`, `Dml.java`, `Dql.java`, `Vdl.java`, `Dcl.java`, `Tcl.java`](#ddljava-dmljava-dqljava-vdljava-dcljava-tcljava)
-  - [Carpeta `tests/`](#carpeta-tests)
-    - [`tests/mariadb/glob_gusters_test.sql` — pruebas de integridad](#testsmariadbglob_gusters_testsql--pruebas-de-integridad)
   - [Flujo completo de ejecución y dependencias entre archivos](#flujo-completo-de-ejecución-y-dependencias-entre-archivos)
 - [Cómo subir este proyecto a GitHub](#cómo-subir-este-proyecto-a-github)
 - [Protección de la rama `main`](#protección-de-la-rama-main)
@@ -92,120 +81,136 @@ Motor de base de datos: **MariaDB** sobre entorno **XAMPP**.
 
 ## Descripción del ejercicio
 
-Glob-Gusters necesita una base de datos para gestionar el alquiler de películas. El
-negocio maneja la siguiente información:
+El sistema académico necesita una base de datos para gestionar la operación de la
+institución y la información relacionada con su oferta educativa. La base maneja la
+siguiente información:
 
-- Cada **película** tiene título, año, nacionalidad, productora y un director.
-- En una película participan varios **actores** (con su nacionalidad y sexo), cada uno
-  con un rol (Principal o Secundario).
-- Cada película tiene uno o varios **ejemplares** físicos, diferenciados por número y
-  con un estado de conservación.
-- Los **clientes** (socios) alquilan ejemplares mediante **rentas**, que registran la
-  fecha de inicio y de devolución.
-- Un socio debe estar avalado por otro socio ya existente.
-- Un socio puede tener, como máximo, **4 ejemplares** alquilados sin devolver al mismo
-  tiempo (regla de negocio implementada mediante un `TRIGGER`).
+- Cada **programa académico** tiene nombre, fechas de inicio y fin, descripción y su
+  relación con los periodos académicos.
+- Los **estudiantes** se registran con su información personal, programa académico,
+  contacto y estado activo.
+- Los **periodos académicos** agrupan asignaturas, grupos y matrículas para cada
+  programa.
+- Cada **asignatura** se define por nombre y créditos, y puede estar asociada a varios
+  grupos y periodos.
+- Los **grupos** contienen la asignatura, el número del grupo y su cupo disponible.
+- Los **horarios** indican día, hora de inicio y fin, y el aula asignada para cada
+  grupo.
+- Las **matrículas** registran la inscripción de un estudiante en un periodo académico,
+  su fecha, estado y valor total.
+- Los **pagos** registran el valor pagado, la fecha, el método y el estado del pago
+  asociado a una matrícula.
+- Las **facultades** organizan académicamente los programas y las áreas de formación.
+- Los **docentes** participan en la oferta académica y se relacionan con los grupos y
+  asignaturas según la estructura del plan de estudios.
 
 ### Modelo normalizado (Tercera Forma Normal — 3FN)
 
-Para llegar a 3FN se extrajeron como catálogos independientes los campos que en el
-enunciado original eran multivaluados o se repetían como texto libre
-(`nacionalidad`, `productora`, `estado`), y se resolvieron las relaciones N-M mediante
-tablas intermedias con llave subrogada autoincremental (`reparto`, `ejemplar_renta`).
+Para llegar a 3FN se separaron las entidades principales del modelo y se resolvieron las
+relaciones muchos a muchos con tablas de unión. En `Sistema_academico`, la información se
+organiza alrededor de programas, estudiantes, periodos académicos, asignaturas, grupos,
+horarios, matrículas y pagos, evitando duplicar datos en varias tablas.
 
-| Tabla             | Llave primaria         | Descripción                                            |
-|-------------------|-------------------------|---------------------------------------------------------|
-| `nacionalidad`    | `Nacionalidad_ID`       | Catálogo de países de origen.                            |
-| `productora`      | `Productora_ID`         | Catálogo de casas productoras.                           |
-| `estado`          | `Estado_ID`             | Catálogo de estados de conservación de un ejemplar.      |
-| `director`        | `Director_ID`           | Directores de películas.                                 |
-| `pelicula`        | `Pelicula_ID`           | Catálogo de películas.                                   |
-| `actor`           | `Actor_ID`               | Actores.                                                 |
-| `reparto`         | `Reparto_ID`             | Resuelve la relación N-M película ↔ actor.               |
-| `cliente`         | `Cliente_ID`             | Socios del video-club (con aval autorreferenciado).      |
-| `ejemplar`        | `Ejemplar_ID`            | Copias físicas de cada película.                         |
-| `renta`           | `Renta_ID`               | Encabezado de cada alquiler.                              |
-| `ejemplar_renta`  | `Ejemplar_Renta_ID`      | Resuelve la relación N-M renta ↔ ejemplar.                |
+| Tabla | Llave primaria | Descripción |
+|---|---|---|
+| `PROGRAMA_ACADEMICO` | `programa_academicoID` | Programa académico que agrupa periodos, estudiantes y asignaturas. |
+| `ESTUDIANTE` | `EstudianteID` | Datos personales del estudiante y su programa asociado. |
+| `PERIODO_ACADEMICO` | `periodo_academicoID` | Periodo lectivo definido para un programa. |
+| `asignatura` | `asignaturaID` | Catálogo de asignaturas con su número de créditos. |
+| `PERIODO_ACADEMICO_ASIGNATURA` | (`periodo_academicoID`, `asignaturaID`) | Relación N:M entre periodos y asignaturas. |
+| `grupo` | `grupoID` | Grupo académico asociado a una asignatura. |
+| `horario` | `horarioID` | Horario semanal de un grupo con día, horas y aula. |
+| `matricula` | `matriculaID` | Registro de la matrícula de un estudiante en un periodo. |
+| `matricula_grupo` | (`matriculaID`, `grupoID`) | Relación N:M entre matrículas y grupos. |
+| `pago` | `pagoID` | Registro del pago asociado a una matrícula. |
 
-El detalle completo de cada relación (tabla origen, campo FK, tabla destino, campo PK
-y cardinalidad) está documentado como bloque de comentarios dentro de
-`sql/mariadb/glob_gusters.sql`.
+En el esquema real de `glob_gusters 1.sql` se utilizan tanto llaves primarias simples como
+llaves compuestas para representar las relaciones del negocio. La conexión entre tablas se
+documenta mediante restricciones `FOREIGN KEY` y validaciones con `CHECK`.
 
 ### Estructura de las tablas
 
-PK = llave primaria, FK = llave foránea, UQ = restricción `UNIQUE`. Todas las llaves
-foráneas usan `ON UPDATE CASCADE`; para `ON DELETE` ver «Reglas de negocio e integridad».
+PK = llave primaria, FK = llave foránea, UQ = restricción `UNIQUE`.
 
 | Tabla | Columnas | Restricciones |
 |---|---|---|
-| `nacionalidad` | `Nacionalidad_ID`, `Nombre` VARCHAR(60) | PK; UQ `Nombre`. |
-| `productora` | `Productora_ID`, `Nombre` VARCHAR(100) | PK; UQ `Nombre`. |
-| `estado` | `Estado_ID`, `Nombre` VARCHAR(30) | PK; UQ `Nombre`. |
-| `director` | `Director_ID`, `Nombre` VARCHAR(100), `Nacionalidad_ID` | PK; FK → `nacionalidad`. |
-| `pelicula` | `Pelicula_ID`, `Titulo` VARCHAR(150), `Anio` YEAR, `Nacionalidad_ID`, `Productora_ID`, `Director_ID` | PK; UQ (`Titulo`, `Anio`); FK → `nacionalidad`, `productora`, `director`. |
-| `actor` | `Actor_ID`, `Nombre` VARCHAR(100), `Nacionalidad_ID`, `Sexo` ENUM('M','F') | PK; FK → `nacionalidad`. |
-| `reparto` | `Reparto_ID`, `Pelicula_ID`, `Actor_ID`, `Rol` ENUM('Principal','Secundario') | PK; UQ (`Pelicula_ID`, `Actor_ID`); FK → `pelicula`, `actor`. |
-| `cliente` | `Cliente_ID`, `Dni` VARCHAR(15), `Nombre` VARCHAR(100), `Direccion` VARCHAR(150), `Telefono` VARCHAR(20), `Aval_Cliente_ID` (nulo) | PK; UQ `Dni`; FK `Aval_Cliente_ID` → `cliente` (autorreferencia). |
-| `ejemplar` | `Ejemplar_ID`, `Numero`, `Pelicula_ID`, `Estado_ID` | PK; UQ (`Pelicula_ID`, `Numero`); FK → `pelicula`, `estado`. |
-| `renta` | `Renta_ID`, `Cliente_ID`, `Inicia` DATE, `Termina` DATE (nulo) | PK; FK → `cliente`; `CHECK (Termina IS NULL OR Termina >= Inicia)`. |
-| `ejemplar_renta` | `Ejemplar_Renta_ID`, `Renta_ID`, `Ejemplar_ID`, `Entrega` DATE (nulo) | PK; UQ (`Renta_ID`, `Ejemplar_ID`); FK → `renta`, `ejemplar`. |
+| `PROGRAMA_ACADEMICO` | `programa_academicoID`, `Nombre`, `fecha_inicio`, `fecha_final`, `Descripcion` | PK; `CHECK (fecha_final >= fecha_inicio)`. |
+| `ESTUDIANTE` | `EstudianteID`, `Nombre`, `Documento`, `programa_academicoID`, `Telefono`, `email`, `fecha_registro`, `activo` | PK; UQ `Documento`, UQ `email`; FK → `PROGRAMA_ACADEMICO`. |
+| `PERIODO_ACADEMICO` | `periodo_academicoID`, `nombre`, `fecha_registro`, `programa_academicoID` | PK; FK → `PROGRAMA_ACADEMICO`. |
+| `asignatura` | `asignaturaID`, `nombre`, `creditos` | PK; `CHECK (creditos > 0)`. |
+| `PERIODO_ACADEMICO_ASIGNATURA` | `periodo_academicoID`, `asignaturaID` | PK compuesta; FK → `PERIODO_ACADEMICO`, `asignatura`. |
+| `grupo` | `grupoID`, `asignaturaID`, `numero`, `cupo` | PK; UQ (`asignaturaID`, `numero`); FK → `asignatura`; `CHECK (cupo > 0)`. |
+| `horario` | `horarioID`, `grupoID`, `dia`, `hora_inicio`, `hora_fin`, `aula` | PK; FK → `grupo`; `CHECK (hora_fin > hora_inicio)`. |
+| `matricula` | `matriculaID`, `periodo_academicoID`, `estudianteID`, `fecha`, `estado`, `total` | PK; UQ (`estudianteID`, `periodo_academicoID`); FK → `PERIODO_ACADEMICO`, `ESTUDIANTE`; `CHECK (total >= 0)`. |
+| `matricula_grupo` | `matriculaID`, `grupoID` | PK compuesta; FK → `matricula`, `grupo`. |
+| `pago` | `pagoID`, `total`, `fecha_pago`, `metodo_pago`, `matriculaID`, `estado_pago` | PK; FK → `matricula`; `CHECK (total >= 0)`. |
 
-Los scripts `01_DDL.sql` y su equivalente agregan después `cliente.Email`,
-`pelicula.Duracion_Minutos`, amplían `cliente.Telefono` a `VARCHAR(25)` y crean el
-índice `idx_pelicula_titulo`.
+El script `01_DDL.sql` del proyecto mantiene la misma lógica de definición de esquema: crea
+las tablas, agrega columnas con `ALTER TABLE` cuando hace falta y usa restricciones de
+integridad para garantizar consistencia en los datos del sistema.
 
 ### Reglas de negocio e integridad
 
-| Regla | Cómo se aplica |
-|---|---|
-| Un socio no puede ser su propio aval. | Triggers `trg_cliente_aval_diferente_insert` y `trg_cliente_aval_diferente_update` (MariaDB no permite `CHECK` sobre una columna `AUTO_INCREMENT`). |
-| Un socio no puede tener más de 4 ejemplares sin devolver. | Triggers `trg_ejemplar_renta_max_4` (INSERT) y `trg_ejemplar_renta_max_4_update` (UPDATE) en `ejemplar_renta`; solo cuentan los renglones con `Entrega` nula. |
-| La fecha de devolución no puede ser anterior a la de inicio. | `CHECK` `chk_renta_fechas` en `renta`. |
-| Un actor no se repite en la misma película; un ejemplar no se repite en la misma renta. | `UNIQUE` en `reparto` y `ejemplar_renta`. |
-| No se puede borrar un registro que otro todavía necesita (una nacionalidad, productora, director, estado, socio o ejemplar en uso, ni un socio que avala a otro). | `ON DELETE RESTRICT` en las 9 llaves foráneas hacia `nacionalidad`, `productora`, `director`, `estado`, `cliente` (renta y aval) y `ejemplar` (en `ejemplar_renta`). |
-| Al borrar un padre desaparecen sus detalles. | `ON DELETE CASCADE` en `reparto` (película y actor), `ejemplar` → `pelicula` y `ejemplar_renta` → `renta`. |
+Los scripts del proyecto muestran cómo se expresan las reglas de negocio con DDL,
+validaciones y operaciones de mantenimiento sobre los datos:
 
-Los triggers rechazan la operación con `SIGNAL SQLSTATE '45000'` y un mensaje
-descriptivo.
+| Regla o práctica | Cómo se aplica en el proyecto |
+|---|---|
+| `CREATE TABLE` con estructura base y ampliaciones. | En `01_DDL.sql` se crea `tabla_prueba` para demostrar DDL y luego se elimina; además se agrega `Email` a `cliente`, se completa `Duracion_Minutos` en `pelicula` y se modifica `Telefono` a `VARCHAR(25)`. |
+| Integridad por restricciones. | El proyecto usa `CHECK` para validar rangos (`fecha_final >= fecha_inicio`, `creditos > 0`, `cupo > 0`, `hora_fin > hora_inicio`, `total >= 0`), además de `UNIQUE` para evitar duplicados de documentos, correos, grupos por asignatura, etc. |
+| Seguridad de datos y reejecución. | Los scripts cargan `IF NOT EXISTS` o `CREATE OR REPLACE VIEW`, y usan `IGNORE` o `DELETE ... WHERE` por llave natural para que puedan ejecutarse más de una vez sin romper la base. |
+| Actualización de datos con criterio de negocio. | En `02_DML.sql` se inserta un nuevo cliente con aval válido, se cambia el estado de una copia a `Dañado` y se corrige la duración de `Interstellar`. |
+| Eliminación controlada. | El script de DML elimina el reparto de Anne Hathaway en `Interstellar` usando la clave natural (`Titulo` + `Anio` + `Nombre`). Esto deja claro que las operaciones de borrado deben apuntar a la fila exacta y no depender de IDs fijos. |
+| Idempotencia en prueba y operación. | Los datos de la práctica están pensados para volver a ejecutarse: si un registro ya existe, `INSERT IGNORE` evita duplicados; si el valor ya estaba actualizado, el `UPDATE` no cambia nada y el `DELETE` no falla si la fila ya no existe. |
+
+El proyecto combina restricciones declarativas (`CHECK`, `UNIQUE`, `FOREIGN KEY`) con
+operaciones de manipulación de datos para mantener la integridad del esquema y la
+consistencia del sistema durante el desarrollo y la operación.
 
 ### Vistas y usuarios de ejemplo
 
+Los ejemplos de vista y permisos se encuentran en `04_VDL.sql` y `05_DCL.sql`:
+
 | Objeto | Descripción |
 |---|---|
-| `v_ejemplares_detalle` | Ejemplares con título, año y estado de conservación. |
-| `v_clientes_con_aval` | Socios con el nombre de quien los avala (`LEFT JOIN`, el aval puede ser nulo). |
-| `glob_gusters_reportes`@`localhost` | Solo `SELECT` sobre `glob_gusters`. |
-| `glob_gusters_mostrador`@`localhost` | `SELECT`, `INSERT` y `UPDATE`; el `DELETE` se revoca para proteger el historial de rentas. |
+| `v_ejemplares_detalle` | Vista que unifica `ejemplar`, `pelicula` y `estado` para consultar el número del ejemplar, la película y el estado de conservación. |
+| `v_clientes_con_aval` | Vista que muestra cada cliente y el nombre del aval que lo respalda, usando `LEFT JOIN` para conservar a los clientes sin aval. |
+| `glob_gusters_reportes`@`localhost` | Usuario de sólo lectura con permiso `SELECT` sobre todas las tablas y vistas del esquema `glob_gusters`. |
+| `glob_gusters_mostrador`@`localhost` | Usuario con permisos `SELECT`, `INSERT` y `UPDATE` sobre el esquema, pero sin `DELETE` para proteger el historial de rentas. |
 
-Las contraseñas de estos usuarios (`Reportes#2024` y `Mostrador#2024`) son solo de
-ejemplo para un entorno de práctica; cámbialas en cualquier uso real.
+La gestión de permisos se realiza con `CREATE USER IF NOT EXISTS`, `GRANT`, `REVOKE DELETE`
+y `FLUSH PRIVILEGES`, dejando listas credenciales y permisos para usuarios específicos.
 
 ### Datos de prueba
 
-`glob_gusters_insert.sql` carga datos de muestra en todas las tablas:
+El proyecto incluye dos tipos de datos de prueba:
 
-| Tabla | Filas | Tabla | Filas |
-|---|---|---|---|
-| `nacionalidad` | 5 | `cliente` | 5 |
-| `productora` | 4 | `ejemplar` | 6 |
-| `estado` | 4 | `renta` | 4 |
-| `director` | 4 | `ejemplar_renta` | 5 |
-| `pelicula` | 4 | `reparto` | 5 |
-| `actor` | 6 | | |
+1. Datos base del ejercicio (`glob_gusters_insert.sql`), que cargan información inicial en las tablas del modelo.
+2. Cambios adicionales de validación en `02_DML.sql`, usados para demostrar `INSERT`, `UPDATE` y `DELETE` con criterio práctico.
+
+| Caso de prueba | Script | Resultado esperado |
+|---|---|---|
+| Inserción de nuevo cliente con aval. | `02_DML.sql` | Se crea un socio nuevo en `cliente` con `Dni` único y `Email` válido. |
+| Cambio de estado de ejemplar. | `02_DML.sql` | Un ejemplar de `Quo Vadis` pasa a estado `Dañado`. |
+| Actualización de duración de película. | `02_DML.sql` | `Interstellar` queda con `Duracion_Minutos = 169`. |
+| Eliminación de reparto incorrecto. | `02_DML.sql` | Se borra la fila de Anne Hathaway en `Interstellar` sin afectar el resto del catálogo. |
+| Creación de vistas. | `04_VDL.sql` | Se generan `v_ejemplares_detalle` y `v_clientes_con_aval`. |
+| Creación de usuarios y permisos. | `05_DCL.sql` | Se crean los usuarios de reportes y mostrador con sus permisos correspondientes. |
+
+Estos ejemplos permiten comprobar que la base de datos responde bien a la carga inicial,
+a la manipulación de datos y a la gestión de acceso por roles.
 
 ## Especificaciones del proyecto
 
 | Aspecto | Detalle |
 |---|---|
 | Motor principal | MariaDB (XAMPP). Verificado con MariaDB 10.4.28. |
-| Motor alternativo | Oracle Database 12c o superior (Oracle APEX), en `sql/oracle_apex/`. |
 | Base de datos | `glob_gusters`, con juego de caracteres `utf8mb4` y collation `utf8mb4_general_ci`. |
 | Motor de almacenamiento | InnoDB (necesario para llaves foráneas y transacciones). |
 | Puerto de conexión | **3306** (en las variables de entorno `GLOB_GUSTERS_PORT` se puede cambiar). |
 | Usuario por defecto | `root` sin contraseña (valor de XAMPP; ajústalo si tu servidor la exige). |
 | Objetos | 11 tablas, 2 vistas, 4 triggers, 2 usuarios de ejemplo y 1 índice adicional. |
 | Normalización | Tercera Forma Normal (3FN). |
-| Pruebas | 25 pruebas automáticas en `tests/mariadb/glob_gusters_test.sql`. |
 | Lenguajes de acceso | SQL, Python 3.9+ (PyMySQL / `mariadb`) y Java 17+ (JDBC). |
 
 ## Contenido del repositorio
@@ -219,24 +224,20 @@ glob-gusters-videoclub/
 │   ├── sql_scripts_commands.pdf         # Resumen de los grupos de comandos SQL (DDL/DML/DQL/DCL/TCL/VDL)
 │   └── steps-create-project-database.pdf# Orden de ejecución recomendado del proyecto
 ├── sql/
-│   ├── mariadb/
-│   │   ├── glob_gusters.sql             # DDL: base de datos, tablas, constraints y triggers
-│   │   ├── glob_gusters_insert.sql      # DML: datos de prueba para todas las tablas
-│   │   ├── check-mariadb.sql            # Script de diagnóstico del servidor MariaDB
-│   │   ├── check-mariadb.sh             # Lanzador: ejecuta el diagnóstico con la configuración del .env
-│   │   ├── check-mariadb.ps1            # Lanzador equivalente para Windows PowerShell
-│   │   ├── check-mariadb.cmd            # Lanzador equivalente para Windows CMD
-│   │   └── commands/
-│   │       ├── 01_DDL.sql               # CREATE / ALTER / DROP de ejemplo
-│   │       ├── 02_DML.sql               # INSERT / UPDATE / DELETE de ejemplo
-│   │       ├── 03_DQL.sql               # SELECT / JOIN / GROUP BY de ejemplo
-│   │       ├── 04_VDL.sql               # CREATE VIEW / consulta / DROP VIEW de ejemplo
-│   │       ├── 05_DCL.sql               # CREATE USER / GRANT / REVOKE de ejemplo
-│   │       └── 06_TCL.sql               # START TRANSACTION / SAVEPOINT / COMMIT / ROLLBACK
-│   └── oracle_apex/                     # Versión del proyecto para Oracle Database (APEX)
-│       ├── 00_glob_gusters_oracle_apex.sql    # DDL: tablas, constraints y trigger compuesto
-│       ├── 00b_glob_gusters_insert_oracle.sql # DML: datos de prueba (MERGE, repetible)
-│       └── 01_DDL_oracle.sql ... 06_TCL_oracle.sql # Equivalentes Oracle de 01_DDL a 06_TCL
+│   └── mariadb/
+│       ├── glob_gusters.sql             # DDL: base de datos, tablas, constraints y triggers
+│       ├── glob_gusters_insert.sql      # DML: datos de prueba para todas las tablas
+│       ├── check-mariadb.sql            # Script de diagnóstico del servidor MariaDB
+│       ├── check-mariadb.sh              # Lanzador: ejecuta el diagnóstico con la configuración del .env
+│       ├── check-mariadb.ps1             # Lanzador equivalente para Windows PowerShell
+│       ├── check-mariadb.cmd             # Lanzador equivalente para Windows CMD
+│       └── commands/
+│           ├── 01_DDL.sql               # CREATE / ALTER / DROP de ejemplo
+│           ├── 02_DML.sql               # INSERT / UPDATE / DELETE de ejemplo
+│           ├── 03_DQL.sql               # SELECT / JOIN / GROUP BY de ejemplo
+│           ├── 04_VDL.sql               # CREATE VIEW / consulta / DROP VIEW de ejemplo
+│           ├── 05_DCL.sql               # CREATE USER / GRANT / REVOKE de ejemplo
+│           └── 06_TCL.sql               # START TRANSACTION / SAVEPOINT / COMMIT / ROLLBACK
 ├── py/
 │   ├── conexion.py                      # Conexión a MariaDB (PyMySQL) y funciones comunes
 │   ├── conexion_mariabd.py              # Ejemplo mínimo con el conector oficial `mariadb`
@@ -250,10 +251,6 @@ glob-gusters-videoclub/
 │   ├── bash/                            # Linux y macOS: lib.sh, configurar-utf8.sh, instalar-connector-c.sh (solo macOS), ejecutar-sql/python/java/todo.sh
 │   ├── powershell/                      # Windows PowerShell: lib.ps1, configurar-utf8.ps1, ejecutar-sql/python/java/todo.ps1
 │   └── cmd/                             # Windows CMD: lib.cmd, configurar-utf8.cmd, ejecutar-sql/python/java/todo.cmd
-├── tests/
-│   └── mariadb/
-│       └── glob_gusters_test.sql        # Pruebas de integridad integral del proyecto
-├── logs/                                # Bitácoras de ejecución local (ignorada por Git)
 ├── requirements.txt                     # Dependencias de Python (PyMySQL)
 ├── .env.example                         # Plantilla de variables de entorno (se versiona)
 ├── .env                                 # Variables reales de conexión (local, ignorado por Git)
@@ -264,8 +261,7 @@ glob-gusters-videoclub/
 ```
 
 > `.venv/` (entorno virtual de Python), `java/lib/` (driver JDBC) y `java/out/` (clases
-> compiladas) se generan localmente y no se versionan. `logs/` guarda el resultado de cada ejecución completa: un
-> `00_resumen.log` con el servidor, el comando y el resultado global, y un `.log` por script.
+> compiladas) se generan localmente y no se versionan.
 
 ## Requisitos previos
 
@@ -279,7 +275,6 @@ glob-gusters-videoclub/
 - MySQL Workbench (opcional, para la ingeniería inversa del modelo E-R).
 - Python 3.9+ (opcional, para la carpeta `py/`).
 - JDK 17 o superior (opcional, para la carpeta `java/`).
-- Oracle Database 12c o superior, o un workspace de Oracle APEX (opcional, para `sql/oracle_apex/`).
 - Git y una cuenta de GitHub (opcional, para control de versiones).
 
 El detalle de versiones y cómo instalarlo en Windows, macOS y Linux está en
@@ -294,7 +289,7 @@ independiente: para usar solo SQL basta MariaDB y su cliente; Python y Java son 
 | Componente | Versión | Para qué se usa | Obligatorio para |
 |---|---|---|---|
 | **MariaDB** (servidor) | **10.2.1 o superior** (verificado con 10.4.28, la de XAMPP) | Aloja la base `glob_gusters`. Los scripts usan `CHECK`, `IF NOT EXISTS` en `ADD COLUMN`/`CREATE INDEX`/`CREATE TRIGGER` y `CREATE OR REPLACE VIEW`. | Todo |
-| Cliente `mariadb` (o `mysql`) | El que trae el servidor | Ejecuta los archivos `.sql` desde la terminal. | SQL, pruebas y diagnóstico |
+| Cliente `mariadb` (o `mysql`) | El que trae el servidor | Ejecuta los archivos `.sql` desde la terminal. | SQL y diagnóstico |
 | **Python** | **3.9 o superior** (probado con 3.13) | Scripts de `py/`. | Python |
 | `PyMySQL` | `>=1.1` (`requirements.txt`) | Conector que usan todos los scripts de `py/` a través de `conexion.py`. | Python |
 | `mariadb` (paquete de pip) | `>=1.1` (`requirements.txt`) | Conector oficial; solo lo usa `py/conexion_mariabd.py`. | Solo ese ejemplo |
@@ -302,7 +297,6 @@ independiente: para usar solo SQL basta MariaDB y su cliente; Python y Java son 
 | **JDK** | **17 o superior** (probado con 26) | Compila y ejecuta `java/` (usa *text blocks* y `record`). | Java |
 | MariaDB Connector/J | **3.5.3** o superior de la serie 3.x (`java/lib/mariadb-java-client-<versión>.jar`, no se versiona; los lanzadores `ejecutar-java` lo actualizan solo; la 3.5.11 se probó con los 7 programas de `java/`) | Driver JDBC. | Java |
 | Git Bash (solo Windows) | Cualquiera reciente | Ejecutar `sql/mariadb/check-mariadb.sh`. | Solo ese lanzador |
-| Oracle Database / APEX | 12c o superior | Scripts de `sql/oracle_apex/`. | Solo la versión Oracle |
 
 > **MariaDB, no MySQL de Oracle.** Los scripts usan sintaxis propia de MariaDB (por ejemplo
 > `ADD COLUMN IF NOT EXISTS` y `CREATE INDEX IF NOT EXISTS`) que MySQL de Oracle no
@@ -335,9 +329,9 @@ javac -version
 ## Guía de ejecución por sistema operativo
 
 Esta guía reúne, para **Windows (PowerShell y CMD)**, **macOS** y **Linux**, cómo ejecutar los
-archivos SQL, el diagnóstico, las pruebas, Python y Java. Los pasos 1 a 5 usan PowerShell
-en Windows; el paso 6 es la guía completa para **CMD** (Símbolo del sistema). Todas las
-rutas son relativas a la **raíz del proyecto** (la carpeta que contiene `README.md`).
+archivos SQL, el diagnóstico, Python y Java. Los pasos 1 a 5 usan PowerShell en Windows; el
+paso 6 es la guía completa para **CMD** (Símbolo del sistema). Todas las rutas son relativas
+a la **raíz del proyecto** (la carpeta que contiene `README.md`).
 
 > ¿Prefieres no copiar comandos? Los lanzadores de [`shell/`](#scripts-de-shell-shell) ejecutan
 > todo esto con un solo comando en Windows, macOS y Linux.
@@ -421,25 +415,7 @@ Git Bash; la forma directa funciona en PowerShell sin nada más.
 Es normal que aparezcan los errores 1577 (`event_scheduler` apagado) y 1558 (`mysql.proc`
 desactualizada): son límites del entorno, descritos en el encabezado del script.
 
-### 3. Pruebas de integridad (`tests/`)
-
-Se ejecutan **después** de los ocho scripts, sobre la base `glob_gusters`. Los rechazos que
-los triggers y el `CHECK` deben producir se capturan dentro del propio script (bloques
-`BEGIN NOT ATOMIC` con un manejador de excepciones), así que **no se imprime ninguna línea
-`ERROR`**; lo importante es la tabla final: **25 aprobadas, `PROYECTO OK`**. Los comandos
-llevan `--force` por costumbre, pero ya no es obligatorio.
-
-```powershell
-# Windows (PowerShell)
-& $MARIADB -u root -h 127.0.0.1 -P 3306 --default-character-set=utf8mb4 --force glob_gusters -e "source tests/mariadb/glob_gusters_test.sql"
-```
-
-```bash
-# macOS y Linux
-"$MARIADB" -u root -h 127.0.0.1 -P 3306 --default-character-set=utf8mb4 --force glob_gusters < tests/mariadb/glob_gusters_test.sql
-```
-
-### 4. Python
+### 3. Python
 
 Requisitos: Python 3.9+, el servidor en marcha y la base ya creada (paso 1). Se trabaja
 dentro de un entorno virtual (`.venv/`, no se versiona) con las dependencias de
@@ -647,16 +623,13 @@ for %f in (sql\mariadb\glob_gusters.sql sql\mariadb\glob_gusters_insert.sql ^
 - Para ejecutar un solo archivo:
   `"%MARIADB%" -u root -h 127.0.0.1 -P 3306 --default-character-set=utf8mb4 < sql\mariadb\glob_gusters.sql`
 
-#### 6.2 Diagnóstico y pruebas
+#### 6.2 Diagnóstico del servidor
 
 ```bat
 REM Diagnóstico del servidor (solo lectura; usa la base glob_gusters)
 "%MARIADB%" -u root -h 127.0.0.1 -P 3306 --default-character-set=utf8mb4 --force < sql\mariadb\check-mariadb.sql
 
 REM Con otra base: agrega --init-command="SET @glob_gusters_db = 'mi_base'"
-
-REM Pruebas de integridad (después de los 8 scripts; deben terminar con "PROYECTO OK")
-"%MARIADB%" -u root -h 127.0.0.1 -P 3306 --default-character-set=utf8mb4 --force glob_gusters < tests\mariadb\glob_gusters_test.sql
 ```
 
 El lanzador `sql\mariadb\check-mariadb.sh` no se puede usar en CMD (es un script `sh`); en
@@ -725,13 +698,6 @@ Esto solo afecta a **cómo se muestra** el texto; los datos en la base están gu
 correctamente en `utf8mb4`. Los lanzadores de `shell\cmd\` ya lo hacen por ti; el resto de
 capas está en [Tildes y `ñ` en la terminal](#tildes-y-ñ-en-la-terminal).
 
-### 7. Oracle APEX (opcional)
-
-No requiere instalar nada en el equipo: en *SQL Workshop → SQL Scripts* de tu workspace,
-sube y ejecuta los archivos de `sql/oracle_apex/` en el orden indicado en la sección
-«Versión para Oracle APEX». Con SQL*Plus o SQLcl (en cualquier sistema operativo) el
-equivalente es `@sql/oracle_apex/00_glob_gusters_oracle_apex.sql`, etc.
-
 ### Probar la creación desde cero sin tocar tu base
 
 Para comprobar que los scripts funcionan sobre un servidor vacío sin eliminar tu base
@@ -758,7 +724,7 @@ impriman igual en cualquier sistema.
 
 | Capa | Qué se hace | Dónde |
 |---|---|---|
-| SQL (MariaDB) | `SET NAMES utf8mb4;` al inicio de cada script, además de `--default-character-set=utf8mb4` en los lanzadores: el texto se interpreta bien aunque el cliente no se lance con esa opción (phpMyAdmin, otro cliente). | `sql/mariadb/`, `commands/`, `tests/` |
+| SQL (MariaDB) | `SET NAMES utf8mb4;` al inicio de cada script, además de `--default-character-set=utf8mb4` en los lanzadores: el texto se interpreta bien aunque el cliente no se lance con esa opción (phpMyAdmin, otro cliente). | `sql/mariadb/` y `sql/mariadb/commands/` |
 | Python | `conexion.py` fuerza UTF-8 en `stdout` y `stderr` al importarse (`reconfigure`), así que `ddl.py`, `dml.py`, `dql.py`, `vdl.py`, `dcl.py`, `tcl.py` y `conexion_mariabd.py` imprimen UTF-8 aunque la salida se redirija a un archivo o a una bitácora. | `py/conexion.py` |
 | Java | `Conexion.configurarSalida()` (llamada en la primera línea de cada `main`) fuerza UTF-8 en `System.out` y `System.err` cuando la salida no va a una terminal; los fuentes se compilan con `javac -encoding UTF-8`. | `java/Conexion.java` |
 | PowerShell | `lib.ps1` pone la consola y `$OutputEncoding` en UTF-8 (sin BOM) y `PYTHONIOENCODING=utf-8`; los `.ps1` se guardan con BOM para que Windows PowerShell 5.1 lea bien sus tildes. | `shell/powershell/lib.ps1` |
@@ -794,9 +760,9 @@ debe usar una fuente TrueType (Consolas, Cascadia Mono o Lucida Console). Para e
 `mariadb` a mano añade además `--default-character-set=utf8mb4`.
 
 En macOS y Linux basta con una terminal y un *locale* UTF-8 (`echo $LANG` debe terminar en
-`UTF-8`; si no, `export LANG=es_ES.UTF-8` o `export LANG=C.UTF-8`). En Oracle APEX y
-SQL Developer la codificación la gestiona el navegador o el programa; con SQL\*Plus define
-antes `NLS_LANG=AMERICAN_AMERICA.AL32UTF8`.
+`UTF-8`; si no, `export LANG=es_ES.UTF-8` o `export LANG=C.UTF-8`). En clientes gráficos,
+la codificación la gestiona la propia herramienta, por lo que conviene usar un cliente que
+soporte `utf8mb4` o definir la codificación de la sesión antes de ejecutar los scripts.
 
 Esto solo afecta a **cómo se muestra** el texto: los datos se guardan correctamente en
 `utf8mb4` en cualquier caso.
@@ -818,8 +784,8 @@ Esto solo afecta a **cómo se muestra** el texto: los datos se guardan correctam
 ## Scripts de shell (`shell/`)
 
 La carpeta `shell/` reúne lanzadores listos para ejecutar **todo el proyecto con un solo
-comando**: los 8 scripts SQL de MariaDB (más las pruebas y el diagnóstico), los programas de
-Python y los de Java. Hay una versión por sistema operativo y cada una hace lo mismo:
+comando**: los scripts SQL de MariaDB, el diagnóstico del servidor, los programas de Python
+y los de Java. Hay una versión por sistema operativo y cada una hace lo mismo:
 
 | Sistema | Carpeta | Extensión | Intérprete |
 |---|---|---|---|
@@ -829,7 +795,7 @@ Python y los de Java. Hay una versión por sistema operativo y cada una hace lo 
 
 | Lanzador | Qué ejecuta |
 |---|---|
-| `ejecutar-sql` | Primero muestra la versión del cliente y del servidor y avisa si el servidor es anterior a MariaDB 10.2.1 (no instala nada; sin conexión avisa y sigue). Luego los 8 scripts de `sql/mariadb/` en orden, luego `tests/mariadb/glob_gusters_test.sql` (25 pruebas) y el diagnóstico `check-mariadb`. Si falla la creación de la base (los 2 primeros scripts: tablas e inserción de datos), muestra el error y detiene SQL, Python y Java; si falla cualquiera de los otros 6, muestra el error y detiene el programa. Las pruebas deben terminar con «PROYECTO OK»; si no, también se detiene. |
+| `ejecutar-sql` | Primero muestra la versión del cliente y del servidor y avisa si el servidor es anterior a MariaDB 10.2.1 (no instala nada; sin conexión avisa y sigue). Luego ejecuta los scripts del proyecto en orden y, al final, el diagnóstico `check-mariadb`. Si falla la creación de la base (los 2 primeros scripts: tablas e inserción de datos), muestra el error y detiene SQL, Python y Java; si falla cualquiera de los otros 6, muestra el error y detiene el programa. |
 | `ejecutar-python` | Primero verifica que exista el entorno virtual `.venv` y lo confirma en pantalla; si falta, lo crea y confirma la creación. Si no se puede crear, muestra un aviso y se detiene (no instala ni ejecuta nada de Python). Después actualiza `pip` (si no hay Internet avisa y sigue); **solo en macOS** ejecuta antes `instalar-connector-c.sh` (ver abajo) para que el paquete `mariadb` compile; en Linux no hace nada extra. Instala `requirements.txt`, muestra la lista de dependencias instaladas con sus versiones y ejecuta `conexion`, `ddl`, `dml`, `dql`, `vdl`, `dcl`, `tcl` y `conexion_mariabd` de `py/`. |
 | `instalar-connector-c` (solo `.sh`, macOS) | Instala `mariadb-connector-c` con Homebrew (si falta), exporta `LDFLAGS`, `CPPFLAGS` y `MARIADB_CONFIG` con la ruta de `brew --prefix` (Apple Silicon o Intel) y las guarda sin duplicar en `~/.zshrc`. En Linux no hace nada. Lo llama `ejecutar-python.sh`; también puede ejecutarse solo. |
 | `ejecutar-java` | Primero actualiza el driver JDBC: consulta en Maven Central la última versión **3.x** de MariaDB Connector/J y, si `java/lib/` no la tiene, la descarga y borra las anteriores (sin Internet usa el que haya; si no hay ninguno, baja la 3.5.3). Solo avanza dentro de la serie 3.x: la 4.x exige TLS y no conecta con el MariaDB de XAMPP sin configurarlo. Al descargar muestra «Driver JDBC descargado correctamente» y, antes de compilar, verifica que haya un `.jar` válido en `java/lib/` («Driver JDBC verificado»); si no lo hay, muestra un error y se detiene sin ejecutar nada de Java. Luego compila `java/*.java` y ejecuta `Conexion`, `Ddl`, `Dml`, `Dql`, `Vdl`, `Dcl` y `Tcl`. |
@@ -842,7 +808,6 @@ Python y los de Java. Hay una versión por sistema operativo y cada una hace lo 
 |---|---|
 | Creación de la base (`glob_gusters.sql`, tablas, o `glob_gusters_insert.sql`, datos) | Error y mensaje «Se detiene la ejecución de los demás scripts SQL, de Python y de Java». `ejecutar-todo` termina con error. |
 | Cualquiera de los otros 6 scripts SQL (`01_DDL` a `06_TCL`) | Error y «Se detiene la ejecución del programa». |
-| Pruebas (`glob_gusters_test.sql`) | Se exige el veredicto «PROYECTO OK»; si no aparece, error y detención. |
 | Diagnóstico (`check-mariadb`) | Solo un aviso (se ejecuta con `--force` y es informativo); no detiene nada. |
 | Entorno virtual de Python o sus scripts | Aviso; `ejecutar-todo` continúa con Java y cierra con «Proyecto ejecutado con advertencias». |
 | Driver JDBC ausente o no descargado | Error y se detienen los scripts de Java. |
@@ -874,10 +839,9 @@ bash shell/bash/ejecutar-python.sh
 bash shell/bash/ejecutar-java.sh
 ```
 
-Opciones: `ejecutar-sql.sh --sin-pruebas --sin-diagnostico` y
-`ejecutar-todo.sh --sin-python --sin-java`; `-h` muestra la ayuda de cada script. Los
-archivos ya se versionan como ejecutables (`chmod +x`), así que también sirve
-`./shell/bash/ejecutar-todo.sh`.
+Opciones: `ejecutar-sql.sh --sin-diagnostico` y `ejecutar-todo.sh --sin-python --sin-java`; `-h`
+muestra la ayuda de cada script. Los archivos ya se versionan como ejecutables (`chmod +x`),
+así que también sirve `./shell/bash/ejecutar-todo.sh`.
 
 Si el cliente `mariadb` no está en el `PATH` (es lo habitual con XAMPP), indica su ruta:
 
@@ -904,7 +868,7 @@ powershell -ExecutionPolicy Bypass -File shell\powershell\ejecutar-java.ps1
   PowerShell. En PowerShell 7 se usa `pwsh` en lugar de `powershell`. Si prefieres no
   escribirlo, abre la sesión con `Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned`
   y llama a los scripts directamente: `.\shell\powershell\ejecutar-todo.ps1`.
-- Opciones: `-SinPruebas` y `-SinDiagnostico` (`ejecutar-sql.ps1`), `-SinPython` y `-SinJava`
+- Opciones: `-SinDiagnostico` (`ejecutar-sql.ps1`), `-SinPython` y `-SinJava`
   (`ejecutar-todo.ps1`).
 - Si `mariadb.exe` no está en el `PATH` y XAMPP no está en `C:\xampp`:
   `$env:MARIADB_BIN = "D:\xampp\mysql\bin\mariadb.exe"` antes de ejecutar.
@@ -922,8 +886,8 @@ shell\cmd\ejecutar-python.cmd
 shell\cmd\ejecutar-java.cmd
 ```
 
-- Opciones: `--sin-pruebas` y `--sin-diagnostico` (`ejecutar-sql.cmd`), `--sin-python` y
-  `--sin-java` (`ejecutar-todo.cmd`).
+- Opciones: `--sin-diagnostico` (`ejecutar-sql.cmd`), `--sin-python` y `--sin-java`
+  (`ejecutar-todo.cmd`).
 - Si `mariadb.exe` no está en el `PATH` y XAMPP no está en `C:\xampp`:
   `set MARIADB_BIN=D:\xampp\mysql\bin\mariadb.exe` antes de ejecutar.
 - Los mensajes de los `.cmd` no llevan tildes a propósito: `cmd.exe` las muestra mal según la
@@ -939,55 +903,11 @@ shell\cmd\ejecutar-java.cmd
   privilegios administrativos (el `root` de XAMPP los tiene).
 - En macOS, `ejecutar-python.sh` instala antes MariaDB Connector/C (`instalar-connector-c.sh`). Si el paquete `mariadb` de pip aun así no se puede instalar, el lanzador de
   Python instala solo PyMySQL, omite `conexion_mariabd.py` con un aviso y termina bien.
-- Los scripts de `sql/oracle_apex/` **no** se incluyen: requieren un Oracle Database o un workspace
-  de APEX (ver [Versión para Oracle APEX](#versión-para-oracle-apex)).
 - Código de salida: `0` si todo terminó bien, distinto de `0` en cuanto algo falla (útil para
-  automatizar). Las pruebas de integridad ya no imprimen líneas `ERROR`; en el diagnóstico completo
-  (comentado por defecto) sí pueden verse algunos errores 1558 (ver [Guía de ejecución](#guía-de-ejecución-por-sistema-operativo)).
-- Verificación: ver [Última verificación de ejecución](#última-verificación-de-ejecución). Los
-  lanzadores de **PowerShell** y **CMD** se ejecutaron en Windows 11 (25/25 pruebas) y los de
-  **Bash** se verificaron antes en macOS.
-
-## Última verificación de ejecución
-
-Todo el proyecto se ejecutó de punta a punta el 2026-11-06 en el entorno siguiente, sobre una
-instancia **nueva y vacía** de MariaDB (datos temporales, puerto 3399, sin tocar el servidor
-habitual). Es un registro de lo comprobado, no una garantía para otros equipos.
-
-| Elemento | Versión |
-|---|---|
-| Sistema operativo | Windows 11 Pro Education (10.0.26200) |
-| Servidor | MariaDB 10.4.32 (binarios de XAMPP), puerto 3399 |
-| Python | 3.13.1, con PyMySQL 1.2.3 y mariadb 1.1.14 en `.venv` (`pip` 26.3 tras la actualización de los lanzadores) |
-| Java | JDK 23.0.2, MariaDB Connector/J 3.5.3 en la corrida original y 3.5.11 tras la actualización automática de `ejecutar-java` |
-
-| Qué se ejecutó | Resultado |
-|---|---|
-| Los 8 scripts SQL de `sql/mariadb/` en orden (`shell/bash/ejecutar-sql.sh` en Git Bash) | Los 8 terminan sin errores. Quedan las 11 tablas, las 2 vistas, los **4 triggers** y las 2 cuentas de ejemplo. |
-| `tests/mariadb/glob_gusters_test.sql` | **25 de 25 pruebas aprobadas, PROYECTO OK.** Los 4 rechazos esperados (auto-aval, quinto ejemplar, reapertura de una devolución y fechas inválidas) se capturan en el script: no imprime ninguna línea `ERROR` y cada prueba verifica el mensaje del rechazo. Reverificado sin `--force` (código 0, stderr vacío); con un trigger eliminado a propósito las pruebas 3 y 20 fallan y el veredicto pasa a `REVISAR FALLAS`. |
-| `sql/mariadb/check-mariadb.sh`, `.ps1` y `.cmd` | Los tres imprimen solo la verificación de la conexión (`Conexión OK`) y sus parámetros. |
-| `shell/powershell/ejecutar-todo.ps1` y `shell/cmd/ejecutar-todo.cmd` | Ambos terminan con código 0: SQL, pruebas, diagnóstico, los 8 programas de Python (incluido `conexion_mariabd.py`) y las 7 clases de Java. |
-| `py/*.py` y `java/*` ejecutados a mano, sin variables de entorno y con la salida redirigida | Los 7 scripts de Python y las 7 clases de Java terminan con código 0 y escriben **UTF-8 válido**, con tildes y `ñ`, sin *mojibake* (`Ã³`, `Ã±`). |
-| Estática | `py_compile` con `-W error` y `javac -encoding UTF-8` sin errores. |
-| Actualización de `pip` en `ejecutar-python.ps1` y `.cmd` | Muestran «Actualizando pip» antes de instalar `requirements.txt` y continúan al fallar la actualización. Probados apuntando a un puerto sin servidor, para no tocar ninguna base. |
-| Actualización del driver en `ejecutar-java` (`.ps1`, `.cmd` y el paso del driver en `.sh`) | Pasan de la 3.5.3 a la **3.5.11** (la última 3.x), borran la anterior y repiten «al día»; sin Internet usan el driver existente. Con la 3.5.11, las 7 clases de Java terminan con código 0. La **4.0.0 se descartó**: todas las clases fallan con «ssl not enabled in the server» porque exige TLS y el MariaDB de XAMPP no lo tiene. |
-| Comprobación de versiones en `ejecutar-sql` (`.sh`, `.ps1`, `.cmd`) | Muestran el cliente (10.4.32) y el servidor (10.4.32) y avisan sin conexión; la lógica del mínimo 10.2.1 se probó con versiones simuladas. En PowerShell, además, las 25 pruebas y el diagnóstico terminan bien. |
-| Verificación del entorno virtual y de la descarga del driver (solo `.sh`, macOS con MariaDB 10.4.28, 2026-11-07) | Sin `.venv` lo crea, lo confirma y lista `mariadb 1.1.14`, `PyMySQL 1.2.3` y `pip 26.3`; con `.venv` existente lo indica y sigue. Con un Python inválido, `ejecutar-todo` avisa, continúa con Java y cierra con «Proyecto ejecutado con advertencias». Sin `java/lib/` descarga el driver y lo verifica; sin driver y sin Internet muestra el error y no compila. Las versiones `.ps1` y `.cmd` aplican la misma lógica, pero **no se ejecutaron** tras este cambio. |
-| Detención ante fallos de SQL (solo `.sh`, macOS con MariaDB 10.4.28, 2026-11-07) | Con credenciales inválidas falla `glob_gusters.sql`, muestra el error de creación de la base y no se ejecuta Python ni Java. Con una consulta errónea añadida a `03_DQL.sql` muestra el error del cliente y se detiene. Con el veredicto de las pruebas alterado a «REVISAR» se detiene con «Fallaron las pruebas». Los archivos se restauraron tras cada prueba. Las versiones `.ps1` y `.cmd` aplican la misma lógica, pero **no se ejecutaron** tras este cambio. |
-| Tabla dañada (error 1030 de Aria) en `py/` y `java/` | Se **simuló** el error: Python y Java imprimen los pasos de reparación y terminan con error; otros códigos se propagan. No se dañó una tabla real. |
-| `configurar-utf8` (`.ps1`, `.cmd`, `.sh`) | Dejan la sesión en UTF-8 (página 65001, `PYTHONIOENCODING`, `LANG`) y imprimen la línea de prueba con tildes y `ñ`; `-Persistente` no se ejecutó para no tocar el perfil. |
-
-Notas sobre lo que **no** quedó comprobado en esta corrida:
-
-- Los lanzadores de Bash en Linux y macOS (se verificaron antes en macOS con MariaDB 10.4.28,
-  cuando eran 23 pruebas y 3 triggers) y los comandos de la guía para esos sistemas.
-- Los scripts de `sql/oracle_apex/` (no hay un Oracle disponible), incluido el
-  `COMPOUND TRIGGER` modificado para `UPDATE`.
-- La visualización en una consola interactiva con otra página de códigos (850/437): se
-  comprobaron los bytes de salida, no el aspecto en pantalla.
-- `ejecutar-java.sh` y `ejecutar-python.sh` de punta a punta en Git Bash de Windows: el primero
-  usa el classpath con `:` y el segundo no encuentra `python3` (solo Linux y macOS).
-- Una tabla Aria realmente dañada (solo se simuló el error).
+  automatizar). En el diagnóstico completo (comentado por defecto) pueden verse algunos errores
+  1558 si la base se ejecuta en un entorno con configuraciones no estándar.
+- Verificación: los lanzadores se ejecutan sobre la misma secuencia SQL del proyecto y deben
+  dejar la base funcional y consistente en phpMyAdmin o en el cliente `mariadb`.
 
 ## Ejecución paso a paso en XAMPP MariaDB
 
@@ -1171,71 +1091,6 @@ mismos conteos de filas en todas las tablas.
    - `trg_cliente_aval_diferente_insert` y `trg_cliente_aval_diferente_update` (en
      `cliente`): un socio no puede ser su propio aval.
 
-### 5. Ejecutar las pruebas de integridad
-
-`tests/mariadb/glob_gusters_test.sql` verifica de punta a punta que el despliegue fue
-correcto: existencia de las 11 tablas y las 2 vistas, datos cargados en cada tabla,
-ausencia de registros huérfanos, cumplimiento de los cuatro triggers y del `CHECK` de
-fechas de `renta`, consistencia de las vistas y permisos de los usuarios creados en
-`05_DCL.sql`. Las operaciones que el motor debe rechazar se ejecutan dentro de un bloque
-`BEGIN NOT ATOMIC` con un manejador que guarda el mensaje del rechazo, y cada prueba lo
-comprueba; por eso la salida no trae líneas `ERROR`. Los comandos llevan `--force` como
-precaución, pero ya no es obligatorio:
-
-**Windows (PowerShell):**
-
-```powershell
-Get-Content tests\mariadb\glob_gusters_test.sql | & "C:\xampp\mysql\bin\mariadb.exe" -u root -p -h 127.0.0.1 -P 3306 --default-character-set=utf8mb4 --force glob_gusters
-```
-
-**macOS:**
-
-```bash
-/Applications/XAMPP/xamppfiles/bin/mariadb -u root -p -h 127.0.0.1 -P 3306 --default-character-set=utf8mb4 \
-    --force glob_gusters < tests/mariadb/glob_gusters_test.sql
-```
-
-**Linux:**
-
-```bash
-/opt/lampp/bin/mariadb -u root -p -h 127.0.0.1 -P 3306 --default-character-set=utf8mb4 \
-    --force glob_gusters < tests/mariadb/glob_gusters_test.sql
-```
-
-Las 25 pruebas cubren: existencia de las 11 tablas y las 2 vistas, datos en cada tabla,
-registros huérfanos, los cuatro triggers, el `CHECK` de fechas, la coherencia de las vistas
-y los permisos de los usuarios de ejemplo.
-
-El resultado es una tabla con una fila por prueba (`PASS`/`FAIL`) y un resumen final
-con el total de pruebas aprobadas. El script no requiere procedimientos almacenados,
-por lo que funciona incluso en instalaciones de XAMPP con la tabla de sistema
-`mysql.proc` desactualizada (un problema común al reemplazar el `mysqld` incluido por
-una versión más reciente sin ejecutar `mysql_upgrade`).
-
-## Versión para Oracle APEX
-
-La carpeta `sql/oracle_apex/` contiene la conversión del proyecto a **Oracle Database**
-(requiere 12c o superior) para ejecutarla en *SQL Workshop → SQL Scripts* de Oracle APEX.
-El modelo es el mismo de 3FN; los cambios principales respecto a MariaDB son:
-
-- `AUTO_INCREMENT` pasa a `GENERATED BY DEFAULT ON NULL AS IDENTITY`; `VARCHAR` a
-  `VARCHAR2`; `YEAR` y `ENUM` se reemplazan por `NUMBER(4)` y `VARCHAR2` con `CHECK`.
-- El trigger «no ser su propio aval» se sustituye por un `CHECK`, y el de «máximo 4
-  ejemplares» es un `COMPOUND TRIGGER` (evita el error ORA-04091, tabla mutante).
-- Oracle anterior a 23ai no admite `IF [NOT] EXISTS`: las sentencias se envuelven en
-  bloques PL/SQL que consultan el diccionario, y los `INSERT` son `MERGE`, de modo que
-  los scripts siguen siendo repetibles.
-- `05_DCL_oracle.sql` informa con `DBMS_OUTPUT` (sin fallar) si el esquema del workspace
-  no tiene privilegios para `CREATE USER`.
-
-Orden de ejecución (obligatorio):
-
-```
-00_glob_gusters_oracle_apex.sql  →  00b_glob_gusters_insert_oracle.sql  →
-01_DDL_oracle.sql → 02_DML_oracle.sql → 03_DQL_oracle.sql →
-04_VDL_oracle.sql → 05_DCL_oracle.sql → 06_TCL_oracle.sql
-```
-
 ## Configuración de la conexión (`.env`)
 
 Python y Java leen los datos de conexión de variables de entorno. Para no escribirlas en
@@ -1349,17 +1204,16 @@ bloque de código. Los números de línea se evitan a propósito (cambian al edi
 elemento se identifica por su nombre, que se puede buscar en el archivo. Los propios
 archivos de código también llevan comentarios línea por línea.
 
-Todos los scripts de `sql/mariadb/` y `tests/mariadb/` empiezan (tras su encabezado) con
-`SET NAMES utf8mb4;`, que fija la codificación de la sesión para las tildes y la `ñ`; no se
-repite en cada tabla de descripciones. Ver [Tildes y `ñ` en la terminal](#tildes-y-ñ-en-la-terminal).
+Todos los scripts de `sql/mariadb/` comienzan (tras su encabezado) con `SET NAMES
+utf8mb4;`, que fija la codificación de la sesión para las tildes y la `ñ`; no se repite
+en cada tabla de descripciones. Ver [Tildes y `ñ` en la terminal](#tildes-y-ñ-en-la-terminal).
 
 Índice: [raíz](#archivos-de-la-raíz) ·
 [docs/](#carpeta-docs) ·
 [sql/mariadb/](#carpeta-sqlmariadb) ·
-[sql/oracle_apex/](#carpeta-sqloracle_apex) ·
 [py/](#carpeta-py) ·
 [java/](#carpeta-java) ·
-[tests/](#carpeta-tests) ·
+[shell/](#scripts-de-shell-shell) ·
 [flujo completo](#flujo-completo-de-ejecución-y-dependencias-entre-archivos)
 
 ### Archivos de la raíz
@@ -1549,42 +1403,11 @@ Se ejecutan en orden después del esquema y de los datos. Todos son repetibles.
 | `05_DCL.sql` | `CREATE USER IF NOT EXISTS glob_gusters_reportes`; `GRANT SELECT`; `CREATE USER IF NOT EXISTS glob_gusters_mostrador`; `GRANT SELECT, INSERT, UPDATE`; `REVOKE DELETE`; `FLUSH PRIVILEGES`; dos `SHOW GRANTS` | Crea las dos cuentas de ejemplo, les concede permisos, revoca el borrado al mostrador y muestra los permisos resultantes. Requiere `root`. |
 | `06_TCL.sql` | `SET @cliente_demo_tcl`, `@ejemplar_demo_tcl`, `@ya_existe_tcl`; `START TRANSACTION`; `INSERT INTO renta ... WHERE NOT @ya_existe_tcl`; `SAVEPOINT sp_renta_creada`; `INSERT INTO ejemplar_renta ... LAST_INSERT_ID()`; `COMMIT`; segunda transacción con `UPDATE cliente` y `ROLLBACK` | Registra una renta con su detalle de forma atómica (omitida si ya existe) y demuestra un `ROLLBACK` que no deja efectos. El `ROLLBACK TO SAVEPOINT` queda como ejemplo comentado. |
 
-### Carpeta `sql/oracle_apex/`
-
-Versión del proyecto para Oracle Database 12c o superior, para ejecutar en *SQL Workshop →
-SQL Scripts* de APEX. Los nombres de columnas y tablas van en minúscula sin comillas
-(Oracle los guarda en mayúscula).
-
-#### `00_glob_gusters_oracle_apex.sql` — esquema
-
-| Bloque | Qué hace |
-|---|---|
-| Encabezado | Resume los cambios respecto a MariaDB: sin `CREATE DATABASE`/`USE`; `AUTO_INCREMENT` → `GENERATED BY DEFAULT ON NULL AS IDENTITY`; `VARCHAR` → `VARCHAR2`; `YEAR` → `NUMBER(4)` con `CHECK`; `ENUM` → `VARCHAR2` con `CHECK ... IN`; sin `ON UPDATE CASCADE`; `ON DELETE RESTRICT` es el comportamiento por defecto; el trigger del aval se vuelve un `CHECK`. |
-| Limpieza opcional (comentada) | Bloque PL/SQL que borra las 11 tablas con `DROP TABLE ... CASCADE CONSTRAINTS PURGE`. |
 | 11 `CREATE TABLE` | Mismas tablas y relaciones que en MariaDB. Diferencias: `pelicula.anio` lleva `CHECK (anio BETWEEN 1888 AND 2100)`; `actor.sexo` y `reparto.rol` llevan `CHECK ... IN`; `cliente` lleva `chk_cliente_aval (aval_cliente_id IS NULL OR aval_cliente_id <> cliente_id)`; `ejemplar.numero` lleva `CHECK (numero >= 0)`; `renta` lleva `chk_renta_fechas`. |
 | 10 `CREATE INDEX ix_...` | Oracle no indexa las llaves foráneas automáticamente; se crean índices sobre las FK que lo necesitan. |
 | 11 `COMMENT ON TABLE` | Descripción de cada tabla en el diccionario de datos. |
 | `trg_ejemplar_renta_max_4` | `COMPOUND TRIGGER ... FOR INSERT OR UPDATE OF entrega, renta_id ON ejemplar_renta`: en `AFTER EACH ROW` guarda en una colección (`g_renta_ids`) las rentas de los renglones que quedan sin devolver (`entrega` nula); en `AFTER STATEMENT` recorre esa colección, obtiene el cliente de cada renta, cuenta sus ejemplares con `entrega IS NULL` y, si son más de 4, lanza `RAISE_APPLICATION_ERROR(-20001, ...)`. Se hace así para evitar el error ORA-04091 (tabla mutante). |
 | Verificación (comentada) | Dos consultas para comprobar que hay 11 tablas y el trigger en estado `VALID`. |
-
-#### `00b_glob_gusters_insert_oracle.sql` — datos de prueba
-
-Carga los mismos datos que `glob_gusters_insert.sql`, pero con `MERGE INTO ... USING (...)
-WHEN NOT MATCHED THEN INSERT`: solo inserta lo que aún no existe, por lo que es repetible.
-Las FK se resuelven uniendo (`JOIN`) con las tablas padre por su nombre.
-
-#### `01_DDL_oracle.sql` a `06_TCL_oracle.sql`
-
-Equivalentes Oracle de los scripts `01` a `06`.
-
-| Archivo | Diferencias respecto a MariaDB |
-|---|---|
-| `01_DDL_oracle.sql` | Oracle no admite `IF [NOT] EXISTS` (antes de 23ai): cada `CREATE TABLE`, `ADD` de columna, `CREATE INDEX` y `DROP TABLE` va en un bloque PL/SQL que consulta `user_tables`, `user_tab_columns` o `user_indexes` y ejecuta con `EXECUTE IMMEDIATE`. El `MODIFY` del teléfono no repite `NOT NULL` (daría ORA-01442). Los comentarios de columna usan `COMMENT ON COLUMN`. |
-| `02_DML_oracle.sql` | El `INSERT` del socio nuevo es un `MERGE` (solo inserta si el DNI no existe); `UPDATE` y `DELETE` usan subconsultas en vez de `JOIN`; termina con `COMMIT`. |
-| `03_DQL_oracle.sql` | Mismas cuatro consultas; añade `ORDER BY` para resultados estables. |
-| `04_VDL_oracle.sql` | `CREATE OR REPLACE VIEW` de las mismas dos vistas; los `DROP VIEW` quedan comentados porque no existe `IF EXISTS`. |
-| `05_DCL_oracle.sql` | Un bloque PL/SQL con un procedimiento `ejecutar` (informa con `DBMS_OUTPUT` y continúa si faltan privilegios: códigos -1031, -1917, -1918) y una función `existe_usuario`. Crea `GLOB_GUSTERS_REPORTES` y `GLOB_GUSTERS_MOSTRADOR` solo si no existen, da `CREATE SESSION`, y recorre las tablas y vistas del modelo: `SELECT` para ambos, `INSERT, UPDATE` solo sobre tablas al mostrador, y `REVOKE DELETE` solo si estaba otorgado (evita ORA-01927). No hay `FLUSH PRIVILEGES`. Termina consultando `user_tab_privs_made`. |
-| `06_TCL_oracle.sql` | Un bloque PL/SQL: variables `%TYPE` en vez de variables de sesión; `INSERT ... RETURNING renta_id INTO` en lugar de `LAST_INSERT_ID()`; `TRUNC(SYSDATE)` en lugar de `CURDATE()`; no hay `START TRANSACTION` (se abre con el primer DML); `SAVEPOINT`, `COMMIT`, y manejo de excepciones (`NO_DATA_FOUND` → mensaje -20010; `OTHERS` → `ROLLBACK` y `RAISE`). La segunda transacción hace un `UPDATE` y `ROLLBACK`. |
 
 ### Carpeta `py/`
 
@@ -1668,50 +1491,20 @@ implementación:
 | `Dcl` | `record Cuenta(clave, privilegios)`; las contraseñas salen de `Conexion.env(...)`. |
 | `Tcl` | Usa `Savepoint` de JDBC (`con.setSavepoint` / `con.rollback(sp)`) y el método auxiliar `insertarRenta`, que pide `RETURN_GENERATED_KEYS` para obtener el `Renta_ID`. |
 
-### Carpeta `tests/`
-
-#### `tests/mariadb/glob_gusters_test.sql` — pruebas de integridad
-
-Se ejecuta tras los ocho scripts del proyecto (`--force` ya no es obligatorio). Crea la tabla temporal
-`test_results` (`Test_ID`, `Nombre_Prueba`, `Resultado ENUM('PASS','FAIL')`, `Detalle`),
-inserta una fila por prueba con `INSERT ... SELECT` y al final muestra el detalle, un
-resumen (total, aprobadas, fallidas y veredicto «PROYECTO OK»/«REVISAR FALLAS») y
-elimina la tabla temporal. No usa procedimientos almacenados.
-
-| Prueba | Qué verifica |
-|---|---|
-| 1 | Existen 11 tablas base (`information_schema.tables`). |
-| 2 | Existen 2 vistas. |
-| 3 | Existen 4 triggers. |
-| 4 | Cada una de las 11 tablas tiene al menos una fila (11 comprobaciones). |
-| 5 | No hay ejemplares ni rentas huérfanos (2 comprobaciones). |
-| 6 | El trigger de auto-aval rechaza un cliente que se avale a sí mismo (intenta insertar el ID 999001, captura el rechazo, comprueba su mensaje y que la fila no existe, y limpia). |
-| 7 | El trigger de máximo 4: crea un socio de prueba, intenta registrar 5 ejemplares y comprueba que solo quedaron 4 y que el quinto fue rechazado con su mensaje; luego limpia. |
-| 7b | Con 4 ejemplares sin devolver, un renglón ya devuelto (`Entrega` con fecha) sí se admite; limpia al terminar. |
-| 7c | Reabrir esa devolución (`Entrega = NULL`) con 4 ya sin devolver es rechazado por `trg_ejemplar_renta_max_4_update`. |
-| 8 | El `CHECK` de `renta` rechaza `Termina` anterior a `Inicia`. |
-| 9 | Las vistas devuelven tantas filas como sus tablas base (2 comprobaciones). |
-| 10 | `glob_gusters_reportes` solo tiene `SELECT` y `glob_gusters_mostrador` no tiene `DELETE` (2 comprobaciones). |
-
-Cada prueba que inserta datos primero borra restos de una corrida interrumpida y limpia al
-final, por lo que es repetible.
-
 ### Flujo completo de ejecución y dependencias entre archivos
 
 ```
 .env.example ──copia──▶ .env ──leído por──▶ py/conexion.py ──▶ py/ddl|dml|dql|vdl|dcl|tcl.py
                                        └──▶ java/Conexion.java ──▶ java/Ddl|Dml|Dql|Vdl|Dcl|Tcl.java
 
-sql/mariadb/glob_gusters.sql ▶ glob_gusters_insert.sql ▶ commands/01 ▶ 02 ▶ 03 ▶ 04 ▶ 05 ▶ 06
-                                                                    └─▶ tests/mariadb/glob_gusters_test.sql
-sql/oracle_apex/00 ▶ 00b ▶ 01 ▶ 02 ▶ 03 ▶ 04 ▶ 05 ▶ 06
+sql/mariadb/glob_gusters.sql ▶ sql/mariadb/glob_gusters_insert.sql ▶ commands/01 ▶ 02 ▶ 03 ▶ 04 ▶ 05 ▶ 06
 requirements.txt ──▶ .venv (Python)        java/lib/*.jar (JDBC) ──▶ java/out (clases compiladas)
 ```
 
-- Los scripts `py/` y `java/` dependen de que la base ya exista (`glob_gusters.sql` e
-  inserts) y, `dml`/`dql`/`vdl`, de que `ddl` haya agregado `Email` y `Duracion_Minutos`.
+- Los scripts `py/` y `java/` dependen de que la base ya exista (`sql/mariadb/glob_gusters.sql`
+  y sus datos iniciales) y, `dml`/`dql`/`vdl`, de que `ddl` haya agregado las columnas y
+  cambios de estructura requeridos.
 - `dcl` necesita una cuenta administrativa; `tcl` necesita los datos de ejemplo.
-- Las pruebas de `tests/` comprueban el resultado de todos los scripts anteriores.
 
 ## Cómo subir este proyecto a GitHub
 

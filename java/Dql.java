@@ -7,23 +7,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * DQL (Data Query Language) — equivalente a sql/mariadb/commands/03_DQL.sql.
+ * DQL (Data Query Language) para la base de datos Sistema_academico.
  *
- * Consultas de solo lectura: SELECT con condición, JOIN y GROUP BY.
+ * Consultas de solo lectura definidas en el script 03_DQL.sql de Sistema_academico.
  * Sin argumentos ejecuta todas; con un nombre ejecuta una sola:
- *     java -cp "out:lib/*" Dql disponibles
+ *     java -cp "out;lib/*" Dql 08_pagos_mas_altos
  *
- * Requisitos: JDK 17 o superior, el driver java/lib/mariadb-java-client-3.5.3.jar (se descarga
- * una sola vez; ver README.md), un servidor MariaDB 10.2.1+ en marcha y la base glob_gusters
- * ya creada. Instalación y comandos para Windows, macOS y Linux: README.md, secciones
- * «Dependencias requeridas» y «Guía de ejecución por sistema operativo».
- * Compilación y ejecución, desde la carpeta java/:
- *     javac -encoding UTF-8 -d out *.java        (Windows PowerShell: (Get-ChildItem *.java).Name)
- *     java -cp "out:lib/*" Dql          (Windows: java -cp "out;lib/*" Dql)
+ * Requisitos: JDK 17 o superior, el driver MariaDB y la base Sistema_academico creada.
+ * Ejecución desde la carpeta java/:
+ *     javac -encoding UTF-8 -d out *.java
+ *     java -cp "out;lib/*" Dql
  */
 public class Dql {
 
-    // Una consulta: título para mostrar y sentencia SQL (record = clase inmutable de datos, Java 16+).
+    // Una consulta: título para mostrar y sentencia SQL.
     record Consulta(String titulo, String sql) {}
 
     // Catálogo de consultas: nombre corto -> Consulta.
@@ -31,38 +28,70 @@ public class Dql {
 
     // Bloque estático: se ejecuta una vez al cargar la clase y llena el catálogo.
     static {
-        // SELECT con condición: ejemplares sin una devolución pendiente (Entrega NULL).
-        CONSULTAS.put("disponibles", new Consulta("Ejemplares disponibles para alquilar", """
-                SELECT e.`Ejemplar_ID`, e.`Numero`, p.`Titulo`
-                FROM `ejemplar` e
-                INNER JOIN `pelicula` p ON p.`Pelicula_ID` = e.`Pelicula_ID`
-                WHERE e.`Ejemplar_ID` NOT IN (
-                    SELECT er.`Ejemplar_ID` FROM `ejemplar_renta` er WHERE er.`Entrega` IS NULL
-                )"""));
-        // JOIN de cinco tablas: rentas que aún no tienen fecha de devolución.
-        CONSULTAS.put("rentas_activas", new Consulta("Rentas activas (sin fecha de devolución)", """
-                SELECT c.`Nombre` AS Cliente, r.`Renta_ID`, r.`Inicia`,
-                       pe.`Titulo` AS Pelicula, ej.`Numero` AS Numero_Ejemplar
-                FROM `renta` r
-                INNER JOIN `cliente` c         ON c.`Cliente_ID` = r.`Cliente_ID`
-                INNER JOIN `ejemplar_renta` er ON er.`Renta_ID` = r.`Renta_ID`
-                INNER JOIN `ejemplar` ej       ON ej.`Ejemplar_ID` = er.`Ejemplar_ID`
-                INNER JOIN `pelicula` pe       ON pe.`Pelicula_ID` = ej.`Pelicula_ID`
-                WHERE r.`Termina` IS NULL
-                ORDER BY r.`Inicia`"""));
-        // GROUP BY: cuántas películas hay por país, de mayor a menor.
-        CONSULTAS.put("peliculas_por_nacionalidad", new Consulta("Películas por nacionalidad", """
-                SELECT n.`Nombre` AS Nacionalidad, COUNT(*) AS Total_Peliculas
-                FROM `pelicula` p
-                INNER JOIN `nacionalidad` n ON n.`Nacionalidad_ID` = p.`Nacionalidad_ID`
-                GROUP BY n.`Nombre`
-                ORDER BY Total_Peliculas DESC"""));
-        // GROUP BY: cuántos ejemplares hay en cada estado de conservación.
-        CONSULTAS.put("ejemplares_por_estado", new Consulta("Ejemplares por estado de conservación", """
-                SELECT es.`Nombre` AS Estado, COUNT(*) AS Total_Ejemplares
-                FROM `ejemplar` e
-                INNER JOIN `estado` es ON es.`Estado_ID` = e.`Estado_ID`
-                GROUP BY es.`Nombre`"""));
+        CONSULTAS.put("01_estudiantes_todos", new Consulta("01. Todos los estudiantes", """
+                SELECT * FROM ESTUDIANTE"""));
+        CONSULTAS.put("02_nombre_email_estudiantes", new Consulta("02. Nombre y email de los estudiantes", """
+                SELECT Nombre, email FROM ESTUDIANTE"""));
+        CONSULTAS.put("03_estudiantes_activos", new Consulta("03. Estudiantes activos", """
+                SELECT Nombre, Documento
+                FROM ESTUDIANTE
+                WHERE activo = TRUE"""));
+        CONSULTAS.put("04_estudiantes_ordenados", new Consulta("04. Estudiantes ordenados por nombre", """
+                SELECT Nombre, fecha_registro
+                FROM ESTUDIANTE
+                ORDER BY Nombre ASC"""));
+        CONSULTAS.put("05_asignaturas_mas_de_3_creditos", new Consulta("05. Asignaturas con más de 3 créditos", """
+                SELECT nombre, creditos
+                FROM asignatura
+                WHERE creditos > 3"""));
+        CONSULTAS.put("06_estudiantes_nombre_con_l", new Consulta("06. Estudiantes cuyo nombre empieza por L", """
+                SELECT Nombre
+                FROM ESTUDIANTE
+                WHERE Nombre LIKE 'L%'"""));
+        CONSULTAS.put("07_matriculas_por_total", new Consulta("07. Matrículas con total entre 1000000 y 1500000", """
+                SELECT matriculaID, estado, total
+                FROM matricula
+                WHERE total BETWEEN 1000000 AND 1500000"""));
+        CONSULTAS.put("08_pagos_mas_altos", new Consulta("08. Los 3 pagos más altos", """
+                SELECT pagoID, total, metodo_pago
+                FROM pago
+                ORDER BY total DESC
+                LIMIT 3"""));
+        CONSULTAS.put("09_total_estudiantes", new Consulta("09. Cantidad de estudiantes", """
+                SELECT COUNT(*) AS total_estudiantes
+                FROM ESTUDIANTE"""));
+        CONSULTAS.put("10_total_pagado", new Consulta("10. Suma de todos los pagos", """
+                SELECT SUM(total) AS total_pagado
+                FROM pago"""));
+        CONSULTAS.put("11_promedio_creditos", new Consulta("11. Promedio de créditos de las asignaturas", """
+                SELECT AVG(creditos) AS promedio_creditos
+                FROM asignatura"""));
+        CONSULTAS.put("12_estudiantes_por_programa", new Consulta("12. Cantidad de estudiantes por programa", """
+                SELECT programa_academicoID, COUNT(*) AS cantidad
+                FROM ESTUDIANTE
+                GROUP BY programa_academicoID"""));
+        CONSULTAS.put("13_estudiantes_y_programa", new Consulta("13. Estudiantes con su programa", """
+                SELECT ESTUDIANTE.Nombre, PROGRAMA_ACADEMICO.Nombre AS programa
+                FROM ESTUDIANTE
+                INNER JOIN PROGRAMA_ACADEMICO
+                    ON ESTUDIANTE.programa_academicoID = PROGRAMA_ACADEMICO.programa_academicoID"""));
+        CONSULTAS.put("14_matriculas_y_estudiante", new Consulta("14. Matrículas con el nombre del estudiante", """
+                SELECT matricula.matriculaID, ESTUDIANTE.Nombre, matricula.estado, matricula.total
+                FROM matricula
+                INNER JOIN ESTUDIANTE
+                    ON matricula.estudianteID = ESTUDIANTE.EstudianteID"""));
+        CONSULTAS.put("15_pagos_y_estudiante", new Consulta("15. Pagos con el nombre del estudiante", """
+                SELECT ESTUDIANTE.Nombre, pago.total, pago.metodo_pago, pago.estado_pago
+                FROM pago
+                INNER JOIN matricula
+                    ON pago.matriculaID = matricula.matriculaID
+                INNER JOIN ESTUDIANTE
+                    ON matricula.estudianteID = ESTUDIANTE.EstudianteID"""));
+        CONSULTAS.put("16_grupos_y_asignatura", new Consulta("16. Grupos con el nombre de su asignatura", """
+                SELECT grupo.grupoID, asignatura.nombre, grupo.numero, grupo.cupo
+                FROM grupo
+                INNER JOIN asignatura
+                    ON grupo.asignaturaID = asignatura.asignaturaID"""));
     }
 
     public static void main(String[] args) throws SQLException {
@@ -83,7 +112,7 @@ public class Dql {
             System.exit(1);
         }
         // Una sola conexión para todas las consultas.
-        try (Connection con = Conexion.conectar()) {
+        try (Connection con = Conexion.conectarA("Sistema_academico")) {
             for (String nombre : nombres) {
                 // Recupera la consulta y muestra su resultado como tabla.
                 Consulta c = CONSULTAS.get(nombre);

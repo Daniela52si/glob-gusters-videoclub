@@ -5,14 +5,14 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * DDL (Data Definition Language) — equivalente a sql/mariadb/commands/01_DDL.sql.
+ * DDL (Data Definition Language) — estructura de la base de datos Sistema_academico.
  *
- * CREATE / ALTER / CREATE INDEX / DROP. Idempotente: todo usa IF [NOT] EXISTS.
- * Requiere haber ejecutado antes sql/mariadb/glob_gusters.sql.
+ * Selecciona Sistema_academico, crea FACULTAD y DOCENTE, y agrega columnas a
+ * ESTUDIANTE, grupo, horario y asignatura.
  *
  * Requisitos: JDK 17 o superior, el driver java/lib/mariadb-java-client-3.5.3.jar (se descarga
- * una sola vez; ver README.md), un servidor MariaDB 10.2.1+ en marcha y la base glob_gusters
- * ya creada. Instalación y comandos para Windows, macOS y Linux: README.md, secciones
+ * una sola vez; ver README.md), un servidor MariaDB 10.2.1+ en marcha y la base
+ * Sistema_academico ya creada. Instalación y comandos para Windows, macOS y Linux: README.md, secciones
  * «Dependencias requeridas» y «Guía de ejecución por sistema operativo».
  * Compilación y ejecución, desde la carpeta java/:
  *     javac -encoding UTF-8 -d out *.java        (Windows PowerShell: (Get-ChildItem *.java).Name)
@@ -20,38 +20,47 @@ import java.util.List;
  */
 public class Ddl {
 
-    // Sentencias DDL en el orden en que se ejecutan. Los bloques """ son text blocks (Java 15+).
+    // Sentencias DDL de Sistema_academico en el orden en que se ejecutan.
     static final List<String> SENTENCIAS = List.of(
-            // CREATE: tabla de prueba para demostrar CREATE TABLE.
-            // IF NOT EXISTS evita el error si la tabla ya existe (re-ejecución segura).
+            // Crea la tabla de facultades.
             """
-            CREATE TABLE IF NOT EXISTS `tabla_prueba` (
-                `Tabla_Prueba_ID` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `Descripcion` VARCHAR(100) NOT NULL,
-                PRIMARY KEY (`Tabla_Prueba_ID`)
-            ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci
-              COMMENT = 'Tabla temporal usada únicamente para demostrar sentencias DDL.'""",
-            // ALTER: correo del socio.
-            // ADD COLUMN IF NOT EXISTS agrega la columna solo si todavía no existe.
+            CREATE TABLE FACULTAD (
+                facultad_id INT PRIMARY KEY,
+                nombre_facultad VARCHAR(150) NOT NULL UNIQUE,
+                ubicacion VARCHAR(100),
+                presupuesto DECIMAL(12,2) NOT NULL,
+                CONSTRAINT chk_presupuesto CHECK (presupuesto >= 0)
+            )""",
+            // Crea la tabla de docentes y su relación con FACULTAD.
             """
-            ALTER TABLE `cliente`
-                ADD COLUMN IF NOT EXISTS `Email` VARCHAR(120) NULL
-                COMMENT 'Correo electrónico de contacto del socio (opcional).'""",
-            // ALTER: duración de la película.
+            CREATE TABLE DOCENTE (
+                docente_id INT PRIMARY KEY,
+                nombres VARCHAR(100) NOT NULL,
+                apellidos VARCHAR(100) NOT NULL,
+                identificacion VARCHAR(30) NOT NULL UNIQUE,
+                correo_institucional VARCHAR(150) NOT NULL UNIQUE,
+                especialidad VARCHAR(100),
+                fecha_contratacion DATE NOT NULL,
+                salario DECIMAL(10,2) NOT NULL,
+                facultad_id INT NOT NULL,
+                CONSTRAINT chk_salario CHECK (salario >= 0),
+                CONSTRAINT fk_docente_facultad
+                    FOREIGN KEY (facultad_id) REFERENCES FACULTAD (facultad_id)
+            )""",
+            // Agrega los datos personales complementarios de ESTUDIANTE.
             """
-            ALTER TABLE `pelicula`
-                ADD COLUMN IF NOT EXISTS `Duracion_Minutos` SMALLINT UNSIGNED NULL
-                COMMENT 'Duración de la película en minutos.'""",
-            // ALTER: amplía el teléfono para indicativos internacionales.
-            // MODIFY COLUMN cambia el tipo de una columna existente (de VARCHAR(20) a VARCHAR(25)).
+            ALTER TABLE ESTUDIANTE
+                ADD fecha_nacimiento DATE NULL,
+                ADD ciudad_residencia VARCHAR(100) NULL""",
+            // Relaciona los grupos con sus docentes.
             """
-            ALTER TABLE `cliente`
-                MODIFY COLUMN `Telefono` VARCHAR(25) NOT NULL
-                COMMENT 'Teléfono de contacto del socio, incluye indicativo internacional.'""",
-            // CREATE INDEX: búsquedas por título.
-            "CREATE INDEX IF NOT EXISTS `idx_pelicula_titulo` ON `pelicula` (`Titulo`)",
-            // DROP: elimina la tabla de prueba.
-            "DROP TABLE IF EXISTS `tabla_prueba`");
+            ALTER TABLE grupo
+                ADD docente_id INT NULL,
+                ADD CONSTRAINT fk_grupo_docente
+                    FOREIGN KEY (docente_id) REFERENCES DOCENTE (docente_id)""",
+            // Agrega información descriptiva a horario y asignatura.
+            "ALTER TABLE horario ADD tipo_aula VARCHAR(50)",
+            "ALTER TABLE asignatura ADD descripcion VARCHAR(500)");
 
     public static void main(String[] args) throws SQLException {
         Conexion.configurarSalida();
@@ -60,8 +69,9 @@ public class Ddl {
 
     /** Cuerpo del programa; main lo ejecuta con Conexion.correr() para explicar tablas dañadas. */
     private static void principal(String[] args) throws SQLException {
-        // Abre la conexión (cuenta por defecto) y la cierra automáticamente al terminar.
+        // Abre la conexión, selecciona la base de destino y la cierra al terminar.
         try (Connection con = Conexion.conectar()) {
+            con.setCatalog("Sistema_academico");
             // Ejecuta cada sentencia DDL en orden.
             for (String sql : SENTENCIAS) {
                 Conexion.ejecutar(con, sql);
@@ -72,14 +82,18 @@ public class Ddl {
             // Confirma los cambios (en MariaDB el DDL ya confirma implícitamente).
             con.commit();
 
-            // Verifica el resultado consultando el diccionario del servidor (information_schema).
-            // DATABASE() = base actual; el filtro IN compara pares (tabla, columna).
-            Conexion.imprimir("Columnas agregadas", Conexion.consultar(con, """
+            // Verifica las tablas creadas y las columnas agregadas en information_schema.
+            Conexion.imprimir("Estructura de Sistema_academico", Conexion.consultar(con, """
                     SELECT table_name AS tabla, column_name AS columna, column_type AS tipo
                     FROM information_schema.columns
                     WHERE table_schema = DATABASE()
-                      AND (table_name, column_name) IN
-                          (('cliente', 'Email'), ('cliente', 'Telefono'), ('pelicula', 'Duracion_Minutos'))
+                      AND (table_name IN ('FACULTAD', 'DOCENTE')
+                           OR (table_name, column_name) IN
+                              (('ESTUDIANTE', 'fecha_nacimiento'),
+                               ('ESTUDIANTE', 'ciudad_residencia'),
+                               ('grupo', 'docente_id'),
+                               ('horario', 'tipo_aula'),
+                               ('asignatura', 'descripcion')))
                     ORDER BY table_name, column_name"""));
         }
     }

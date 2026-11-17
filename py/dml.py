@@ -1,82 +1,210 @@
-"""DML (Data Manipulation Language) — equivalente a sql/mariadb/commands/02_DML.sql.
+"""DML (Data Manipulation Language) para la base de datos Sistema_academico.
 
-INSERT (nuevo socio), UPDATE (estado de un ejemplar y duración de una película) y
-DELETE (una fila de reparto). Todo se localiza por llave natural y es repetible.
-Requiere glob_gusters_insert.sql y ddl.py (columnas Email y Duracion_Minutos).
-Las sentencias llevan parámetros (%s), nunca valores concatenados en el SQL.
+Carga datos de ejemplo en el orden de las llaves foráneas, actualiza cuatro registros
+y elimina los datos de una matrícula. Requiere haber ejecutado antes 01_DDL.sql.
+Las sentencias usan parámetros (%s) y se confirman en una sola transacción.
 
-Requisitos: Python 3.9+, el paquete PyMySQL (`pip install -r requirements.txt` dentro del
-entorno virtual .venv), un servidor MariaDB 10.2.1+ en marcha y la base glob_gusters ya
-creada. Instalación y comandos para Windows, macOS y Linux: README.md, secciones
-«Dependencias requeridas» y «Guía de ejecución por sistema operativo».
-Ejecución, con el entorno virtual instalado y ACTIVADO y desde la raíz del proyecto:
-    python3 py/dml.py          (macOS y Linux; en Windows: python py/dml.py)
+Requisitos: Python 3.9+, PyMySQL configurado para este proyecto y un servidor MariaDB
+en marcha con Sistema_academico creada.
+Ejecución desde la raíz del proyecto, con el entorno virtual activado:
+    python py/dml.py
 """
 
 # Funciones comunes de conexion.py.
-from conexion import conexion, consultar, ejecutar, imprimir, principal
+from conexion import conexion, ejecutar, principal
 
 
 def main():
-    # Abre la conexión y la cierra automáticamente al salir.
-    with conexion() as con:
-        # INSERT: socio nuevo avalado por Laura Gómez (se busca por DNI). IGNORE evita el
-        # duplicado en reejecuciones (Dni es UNIQUE). El aval va en tabla derivada porque
-        # MariaDB no deja leer `cliente` directo dentro de un INSERT sobre `cliente`.
+    # Conserva la configuración de host y usuario, pero selecciona la base requerida.
+    with conexion(database="Sistema_academico") as con:
         n = ejecutar(
             con,
-            """INSERT IGNORE INTO `cliente`
-                   (`Dni`, `Nombre`, `Direccion`, `Telefono`, `Aval_Cliente_ID`, `Email`)
-               VALUES (%s, %s, %s, %s,
-                       (SELECT `Cliente_ID` FROM
-                           (SELECT `Cliente_ID` FROM `cliente` WHERE `Dni` = %s) AS `aval`),
-                       %s)""",
-            # Valores en el orden de los %s: dni, nombre, dirección, teléfono,
-            # DNI del aval (para buscar su ID) y correo electrónico.
-            ("1000000005", "Sofía Ramírez", "Calle 50 # 20-30", "3011122334",
-             "1000000001", "sofia.ramirez@example.com"),
+            """INSERT INTO PROGRAMA_ACADEMICO
+                   (programa_academicoID, Nombre, fecha_inicio, fecha_final, Descripcion)
+               VALUES (%s, %s, %s, %s, %s), (%s, %s, %s, %s, %s), (%s, %s, %s, %s, %s)""",
+            (
+                1, "Ingenieria de Sistemas", "2026-02-01", "2030-12-01",
+                "Programa profesional de 10 semestres",
+                2, "Administracion de Empresas", "2026-02-01", "2030-12-01",
+                "Programa profesional de 10 semestres",
+                3, "Tecnologia en Analisis de Datos", "2026-02-01", "2029-06-01",
+                "Programa tecnologico de 6 semestres",
+            ),
         )
-        # `n` es el número de filas insertadas (0 si el socio ya existía).
-        print(f"INSERT cliente: {n} fila(s)")
+        print(f"INSERT PROGRAMA_ACADEMICO: {n} fila(s)")
 
-        # UPDATE: Quo Vadis (1951), ejemplar 2, queda como 'Dañado'.
-        # El JOIN localiza el ejemplar por título, año y número; la subconsulta obtiene el ID del estado.
         n = ejecutar(
             con,
-            """UPDATE `ejemplar` e
-               INNER JOIN `pelicula` p ON p.`Pelicula_ID` = e.`Pelicula_ID`
-               SET e.`Estado_ID` = (SELECT `Estado_ID` FROM `estado` WHERE `Nombre` = %s)
-               WHERE p.`Titulo` = %s AND p.`Anio` = %s AND e.`Numero` = %s""",
-            ("Dañado", "Quo Vadis", 1951, 2),
+            """INSERT INTO ESTUDIANTE
+                   (EstudianteID, Nombre, Documento, programa_academicoID, Telefono, email, fecha_registro, activo)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s, %s, %s),
+                      (%s, %s, %s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s, %s, %s),
+                      (%s, %s, %s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s, %s, %s)""",
+            (
+                1, "Laura Perez", "1001001", 1, "3001112233", "laura.perez@mail.com", "2026-01-15", True,
+                2, "Carlos Ruiz", "1001002", 2, "3002223344", "carlos.ruiz@mail.com", "2026-01-16", True,
+                3, "Maria Gomez", "1001003", 1, "3003334455", "maria.gomez@mail.com", "2026-01-17", True,
+                4, "Andres Torres", "1001004", 3, "3004445566", "andres.torres@mail.com", "2026-01-18", True,
+                5, "Sofia Ramirez", "1001005", 2, "3005556677", "sofia.ramirez@mail.com", "2026-01-19", True,
+                6, "Juan Castro", "1001006", 3, "3006667788", "juan.castro@mail.com", "2026-01-20", False,
+            ),
         )
-        print(f"UPDATE ejemplar: {n} fila(s)")
+        print(f"INSERT ESTUDIANTE: {n} fila(s)")
 
-        # UPDATE: duración de Interstellar.
         n = ejecutar(
             con,
-            "UPDATE `pelicula` SET `Duracion_Minutos` = %s WHERE `Titulo` = %s AND `Anio` = %s",
-            (169, "Interstellar", 2014),
+            """INSERT INTO PERIODO_ACADEMICO
+                   (periodo_academicoID, nombre, fecha_registro, programa_academicoID)
+               VALUES (%s, %s, %s, %s), (%s, %s, %s, %s),
+                      (%s, %s, %s, %s), (%s, %s, %s, %s)""",
+            (
+                1, "2026-1", "2026-01-10", 1,
+                2, "2026-1", "2026-01-10", 2,
+                3, "2026-1", "2026-01-10", 3,
+                4, "2026-2", "2026-07-01", 1,
+            ),
         )
-        print(f"UPDATE pelicula: {n} fila(s)")
+        print(f"INSERT PERIODO_ACADEMICO: {n} fila(s)")
 
-        # DELETE: quita a Anne Hathaway del reparto de Interstellar.
-        # `DELETE r FROM ... JOIN ...` borra solo filas de `reparto` (alias r).
         n = ejecutar(
             con,
-            """DELETE r FROM `reparto` r
-               INNER JOIN `pelicula` p ON p.`Pelicula_ID` = r.`Pelicula_ID`
-               INNER JOIN `actor` a ON a.`Actor_ID` = r.`Actor_ID`
-               WHERE p.`Titulo` = %s AND p.`Anio` = %s AND a.`Nombre` = %s""",
-            ("Interstellar", 2014, "Anne Hathaway"),
+            """INSERT INTO asignatura (asignaturaID, nombre, creditos)
+               VALUES (%s, %s, %s), (%s, %s, %s), (%s, %s, %s),
+                      (%s, %s, %s), (%s, %s, %s)""",
+            (
+                1, "Bases de Datos", 3,
+                2, "Programacion I", 4,
+                3, "Matematicas Basicas", 3,
+                4, "Contabilidad General", 3,
+                5, "Estadistica", 3,
+            ),
         )
-        print(f"DELETE reparto: {n} fila(s)")
+        print(f"INSERT asignatura: {n} fila(s)")
 
-        # Confirma de forma definitiva las cuatro operaciones anteriores.
+        n = ejecutar(
+            con,
+            """INSERT INTO PERIODO_ACADEMICO_ASIGNATURA (periodo_academicoID, asignaturaID)
+               VALUES (%s, %s), (%s, %s), (%s, %s), (%s, %s),
+                      (%s, %s), (%s, %s), (%s, %s), (%s, %s)""",
+            (1, 1, 1, 2, 1, 3, 2, 3, 2, 4, 3, 1, 3, 5, 4, 1),
+        )
+        print(f"INSERT PERIODO_ACADEMICO_ASIGNATURA: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            """INSERT INTO grupo (grupoID, asignaturaID, numero, cupo)
+               VALUES (%s, %s, %s, %s), (%s, %s, %s, %s), (%s, %s, %s, %s),
+                      (%s, %s, %s, %s), (%s, %s, %s, %s), (%s, %s, %s, %s)""",
+            (
+                1, 1, 1, 30, 2, 1, 2, 25, 3, 2, 1, 30,
+                4, 3, 1, 40, 5, 4, 1, 35, 6, 5, 1, 30,
+            ),
+        )
+        print(f"INSERT grupo: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            """INSERT INTO horario (horarioID, grupoID, dia, hora_inicio, hora_fin, aula)
+               VALUES (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s),
+                      (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s),
+                      (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s)""",
+            (
+                1, 1, "Lunes", "07:00:00", "09:00:00", "A-101",
+                2, 2, "Martes", "09:00:00", "11:00:00", "A-102",
+                3, 3, "Miercoles", "11:00:00", "13:00:00", "B-201",
+                4, 4, "Jueves", "07:00:00", "09:00:00", "B-202",
+                5, 5, "Viernes", "14:00:00", "16:00:00", "C-301",
+                6, 6, "Sabado", "08:00:00", "10:00:00", "C-302",
+            ),
+        )
+        print(f"INSERT horario: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            """INSERT INTO matricula
+                   (matriculaID, periodo_academicoID, estudianteID, fecha, estado, total)
+               VALUES (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s),
+                      (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s),
+                      (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s)""",
+            (
+                1, 1, 1, "2026-01-25", "Activa", 1500000.00,
+                2, 2, 2, "2026-01-26", "Activa", 1200000.00,
+                3, 1, 3, "2026-01-27", "Activa", 1500000.00,
+                4, 3, 4, "2026-01-28", "Pendiente", 900000.00,
+                5, 2, 5, "2026-01-29", "Activa", 1200000.00,
+                6, 3, 6, "2026-01-30", "Cancelada", 900000.00,
+            ),
+        )
+        print(f"INSERT matricula: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            """INSERT INTO matricula_grupo (matriculaID, grupoID)
+               VALUES (%s, %s), (%s, %s), (%s, %s), (%s, %s), (%s, %s),
+                      (%s, %s), (%s, %s), (%s, %s), (%s, %s), (%s, %s)""",
+            (1, 1, 1, 3, 2, 4, 2, 5, 3, 2, 3, 4, 4, 6, 5, 4, 5, 5, 6, 6),
+        )
+        print(f"INSERT matricula_grupo: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            """INSERT INTO pago
+                   (pagoID, total, fecha_pago, metodo_pago, matriculaID, estado_pago)
+               VALUES (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s),
+                      (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s),
+                      (%s, %s, %s, %s, %s, %s), (%s, %s, %s, %s, %s, %s)""",
+            (
+                1, 1500000.00, "2026-01-26", "Tarjeta de credito", 1, "Pagado",
+                2, 1200000.00, "2026-01-27", "Transferencia", 2, "Pagado",
+                3, 750000.00, "2026-01-28", "Efectivo", 3, "Parcial",
+                4, 900000.00, "2026-01-29", "PSE", 4, "Pendiente",
+                5, 1200000.00, "2026-01-30", "Tarjeta debito", 5, "Pagado",
+                6, 900000.00, "2026-01-31", "Efectivo", 6, "Reembolsado",
+            ),
+        )
+        print(f"INSERT pago: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            "UPDATE ESTUDIANTE SET Telefono = %s WHERE EstudianteID = %s",
+            ("3109998877", 1),
+        )
+        print(f"UPDATE ESTUDIANTE: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            "UPDATE matricula SET estado = %s WHERE matriculaID = %s",
+            ("Activa", 4),
+        )
+        print(f"UPDATE matricula: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            "UPDATE pago SET total = %s, estado_pago = %s WHERE pagoID = %s",
+            (1500000.00, "Pagado", 3),
+        )
+        print(f"UPDATE pago: {n} fila(s)")
+
+        n = ejecutar(
+            con,
+            "UPDATE grupo SET cupo = cupo + %s WHERE grupoID = %s",
+            (5, 1),
+        )
+        print(f"UPDATE grupo: {n} fila(s)")
+
+        n = ejecutar(con, "DELETE FROM horario WHERE horarioID = %s", (6,))
+        print(f"DELETE horario: {n} fila(s)")
+
+        n = ejecutar(con, "DELETE FROM matricula_grupo WHERE matriculaID = %s", (6,))
+        print(f"DELETE matricula_grupo: {n} fila(s)")
+
+        n = ejecutar(con, "DELETE FROM pago WHERE matriculaID = %s", (6,))
+        print(f"DELETE pago: {n} fila(s)")
+
+        n = ejecutar(con, "DELETE FROM matricula WHERE matriculaID = %s", (6,))
+        print(f"DELETE matricula: {n} fila(s)")
+
         con.commit()
-
-        # Muestra el socio recién insertado para comprobar el resultado.
-        imprimir("Cliente nuevo", consultar(
-            con, "SELECT `Cliente_ID`, `Nombre`, `Email` FROM `cliente` WHERE `Dni` = %s", ("1000000005",)))
 
 
 # Ejecuta main() solo al lanzar el archivo directamente.

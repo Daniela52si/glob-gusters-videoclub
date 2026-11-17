@@ -1,15 +1,12 @@
-"""DQL (Data Query Language) — equivalente a sql/mariadb/commands/03_DQL.sql.
+"""DQL (Data Query Language) para la base de datos Sistema_academico.
 
-Consultas de solo lectura: SELECT con condición, JOIN y GROUP BY.
+Consultas de solo lectura definidas en el script 03_DQL.sql de Sistema_academico.
 Sin argumentos ejecuta todas; con un nombre ejecuta una sola:
-    python3 py/dql.py disponibles   (macOS/Linux; en Windows: python py/dql.py disponibles)
+    python py/dql.py 08_pagos_mas_altos
 
-Requisitos: Python 3.9+, el paquete PyMySQL (`pip install -r requirements.txt` dentro del
-entorno virtual .venv), un servidor MariaDB 10.2.1+ en marcha y la base glob_gusters ya
-creada. Instalación y comandos para Windows, macOS y Linux: README.md, secciones
-«Dependencias requeridas» y «Guía de ejecución por sistema operativo».
-Ejecución, con el entorno virtual instalado y ACTIVADO y desde la raíz del proyecto:
-    python3 py/dql.py          (macOS y Linux; en Windows: python py/dql.py)
+Requisitos: Python 3.9+, el paquete PyMySQL y la base Sistema_academico creada.
+Ejecución desde la raíz del proyecto con el entorno virtual instalado y ACTIVADO:
+    python py/dql.py
 """
 
 # `sys` da acceso a los argumentos de la línea de comandos (sys.argv) y a sys.exit.
@@ -20,45 +17,101 @@ from conexion import conexion, consultar, imprimir, principal
 
 # Catálogo de consultas: nombre corto -> (título para mostrar, sentencia SQL).
 CONSULTAS = {
-    # SELECT con condición: ejemplares sin una devolución pendiente (Entrega NULL).
-    "disponibles": (
-        "Ejemplares disponibles para alquilar",
-        """SELECT e.`Ejemplar_ID`, e.`Numero`, p.`Titulo`
-           FROM `ejemplar` e
-           INNER JOIN `pelicula` p ON p.`Pelicula_ID` = e.`Pelicula_ID`
-           WHERE e.`Ejemplar_ID` NOT IN (
-               SELECT er.`Ejemplar_ID` FROM `ejemplar_renta` er WHERE er.`Entrega` IS NULL
-           )""",
+    "01_estudiantes_todos": (
+        "01. Todos los estudiantes",
+        """SELECT * FROM ESTUDIANTE""",
     ),
-    # JOIN de cinco tablas: rentas que aún no tienen fecha de devolución.
-    "rentas_activas": (
-        "Rentas activas (sin fecha de devolución)",
-        """SELECT c.`Nombre` AS Cliente, r.`Renta_ID`, r.`Inicia`,
-                  pe.`Titulo` AS Pelicula, ej.`Numero` AS Numero_Ejemplar
-           FROM `renta` r
-           INNER JOIN `cliente` c         ON c.`Cliente_ID` = r.`Cliente_ID`
-           INNER JOIN `ejemplar_renta` er ON er.`Renta_ID` = r.`Renta_ID`
-           INNER JOIN `ejemplar` ej       ON ej.`Ejemplar_ID` = er.`Ejemplar_ID`
-           INNER JOIN `pelicula` pe       ON pe.`Pelicula_ID` = ej.`Pelicula_ID`
-           WHERE r.`Termina` IS NULL
-           ORDER BY r.`Inicia`""",
+    "02_nombre_email_estudiantes": (
+        "02. Nombre y email de los estudiantes",
+        """SELECT Nombre, email FROM ESTUDIANTE""",
     ),
-    # GROUP BY: cuántas películas hay por país, de mayor a menor.
-    "peliculas_por_nacionalidad": (
-        "Películas por nacionalidad",
-        """SELECT n.`Nombre` AS Nacionalidad, COUNT(*) AS Total_Peliculas
-           FROM `pelicula` p
-           INNER JOIN `nacionalidad` n ON n.`Nacionalidad_ID` = p.`Nacionalidad_ID`
-           GROUP BY n.`Nombre`
-           ORDER BY Total_Peliculas DESC""",
+    "03_estudiantes_activos": (
+        "03. Estudiantes activos",
+        """SELECT Nombre, Documento
+           FROM ESTUDIANTE
+           WHERE activo = TRUE""",
     ),
-    # GROUP BY: cuántos ejemplares hay en cada estado de conservación.
-    "ejemplares_por_estado": (
-        "Ejemplares por estado de conservación",
-        """SELECT es.`Nombre` AS Estado, COUNT(*) AS Total_Ejemplares
-           FROM `ejemplar` e
-           INNER JOIN `estado` es ON es.`Estado_ID` = e.`Estado_ID`
-           GROUP BY es.`Nombre`""",
+    "04_estudiantes_ordenados": (
+        "04. Estudiantes ordenados por nombre",
+        """SELECT Nombre, fecha_registro
+           FROM ESTUDIANTE
+           ORDER BY Nombre ASC""",
+    ),
+    "05_asignaturas_mas_de_3_creditos": (
+        "05. Asignaturas con más de 3 créditos",
+        """SELECT nombre, creditos
+           FROM asignatura
+           WHERE creditos > 3""",
+    ),
+    "06_estudiantes_nombre_con_l": (
+        "06. Estudiantes cuyo nombre empieza por L",
+        """SELECT Nombre
+           FROM ESTUDIANTE
+           WHERE Nombre LIKE 'L%'""",
+    ),
+    "07_matriculas_por_total": (
+        "07. Matrículas con total entre 1000000 y 1500000",
+        """SELECT matriculaID, estado, total
+           FROM matricula
+           WHERE total BETWEEN 1000000 AND 1500000""",
+    ),
+    "08_pagos_mas_altos": (
+        "08. Los 3 pagos más altos",
+        """SELECT pagoID, total, metodo_pago
+           FROM pago
+           ORDER BY total DESC
+           LIMIT 3""",
+    ),
+    "09_total_estudiantes": (
+        "09. Cantidad de estudiantes",
+        """SELECT COUNT(*) AS total_estudiantes
+           FROM ESTUDIANTE""",
+    ),
+    "10_total_pagado": (
+        "10. Suma de todos los pagos",
+        """SELECT SUM(total) AS total_pagado
+           FROM pago""",
+    ),
+    "11_promedio_creditos": (
+        "11. Promedio de créditos de las asignaturas",
+        """SELECT AVG(creditos) AS promedio_creditos
+           FROM asignatura""",
+    ),
+    "12_estudiantes_por_programa": (
+        "12. Cantidad de estudiantes por programa",
+        """SELECT programa_academicoID, COUNT(*) AS cantidad
+           FROM ESTUDIANTE
+           GROUP BY programa_academicoID""",
+    ),
+    "13_estudiantes_y_programa": (
+        "13. Estudiantes con su programa",
+        """SELECT ESTUDIANTE.Nombre, PROGRAMA_ACADEMICO.Nombre AS programa
+           FROM ESTUDIANTE
+           INNER JOIN PROGRAMA_ACADEMICO
+               ON ESTUDIANTE.programa_academicoID = PROGRAMA_ACADEMICO.programa_academicoID""",
+    ),
+    "14_matriculas_y_estudiante": (
+        "14. Matrículas con el nombre del estudiante",
+        """SELECT matricula.matriculaID, ESTUDIANTE.Nombre, matricula.estado, matricula.total
+           FROM matricula
+           INNER JOIN ESTUDIANTE
+               ON matricula.estudianteID = ESTUDIANTE.EstudianteID""",
+    ),
+    "15_pagos_y_estudiante": (
+        "15. Pagos con el nombre del estudiante",
+        """SELECT ESTUDIANTE.Nombre, pago.total, pago.metodo_pago, pago.estado_pago
+           FROM pago
+           INNER JOIN matricula
+               ON pago.matriculaID = matricula.matriculaID
+           INNER JOIN ESTUDIANTE
+               ON matricula.estudianteID = ESTUDIANTE.EstudianteID""",
+    ),
+    "16_grupos_y_asignatura": (
+        "16. Grupos con el nombre de su asignatura",
+        """SELECT grupo.grupoID, asignatura.nombre, grupo.numero, grupo.cupo
+           FROM grupo
+           INNER JOIN asignatura
+               ON grupo.asignaturaID = asignatura.asignaturaID""",
     ),
 }
 
@@ -71,8 +124,8 @@ def main(argv):
     if desconocidas:
         # sys.exit con un texto lo imprime en stderr y termina con código 1.
         sys.exit(f"Consulta desconocida: {', '.join(desconocidas)}. Opciones: {', '.join(CONSULTAS)}")
-    # Una sola conexión para todas las consultas.
-    with conexion() as con:
+    # Una sola conexión a Sistema_academico para todas las consultas.
+    with conexion(database="Sistema_academico") as con:
         for nombre in nombres:
             # Desempaqueta la pareja (título, SQL) y muestra el resultado como tabla.
             titulo, sql = CONSULTAS[nombre]

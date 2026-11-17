@@ -149,13 +149,23 @@ public class Conexion {
         return conectar(USER, PASSWORD);
     }
 
+    /** Abre una conexión nueva con la cuenta por defecto y una base de datos específica. */
+    static Connection conectarA(String baseDatos) throws SQLException {
+        return conectar(USER, PASSWORD, baseDatos);
+    }
+
     /**
      * Abre una conexión nueva con la cuenta indicada.
      * autocommit queda apagado: cada script decide cuándo hacer commit/rollback.
      */
     static Connection conectar(String usuario, String clave) throws SQLException {
+        return conectar(usuario, clave, DB);
+    }
+
+    /** Abre una conexión nueva con la cuenta indicada y la base de datos especificada. */
+    private static Connection conectar(String usuario, String clave, String baseDatos) throws SQLException {
         // URL JDBC: protocolo, servidor, puerto, base de datos y codificación UTF-8.
-        String url = "jdbc:mariadb://" + HOST + ":" + PORT + "/" + DB + "?characterEncoding=utf8";
+        String url = "jdbc:mariadb://" + HOST + ":" + PORT + "/" + baseDatos + "?characterEncoding=utf8";
         String claveSegura = clave == null ? "" : clave; // vacía o nula = sin contraseña
         try {
             // Abre la conexión con el driver MariaDB Connector/J.
@@ -183,8 +193,13 @@ public class Conexion {
             // Error 1049 = la base de datos no existe todavía. Se explica qué hacer, sin traza
             // técnica, y se sale con código 1 (igual que hace py/conexion.py).
             if (error.getErrorCode() == 1049) {
-                System.err.println("La base de datos no existe todavía: ejecuta primero "
-                        + "sql/mariadb/glob_gusters.sql y glob_gusters_insert.sql (ver README).");
+                if (DB.equals(baseDatos)) {
+                    System.err.println("La base de datos no existe todavía: ejecuta primero "
+                            + "sql/mariadb/glob_gusters.sql y glob_gusters_insert.sql (ver README).");
+                } else {
+                    System.err.println("La base de datos '" + baseDatos
+                            + "' no existe todavía: ejecuta primero el script 01_DDL.sql de esa base.");
+                }
                 System.exit(1);
             }
             // Cualquier otro error se propaga sin modificar.

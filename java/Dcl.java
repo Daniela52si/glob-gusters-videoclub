@@ -6,78 +6,91 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * DCL (Data Control Language) — equivalente a sql/mariadb/commands/05_DCL.sql.
+ * DCL (Data Control Language) para la base de datos Sistema_academico.
  *
- * CREATE USER / GRANT / REVOKE / FLUSH PRIVILEGES / SHOW GRANTS. Requiere una cuenta
- * administrativa (por defecto root de XAMPP). Es repetible: CREATE USER usa IF NOT EXISTS.
+ * Crea las cuentas de estudiante, profesor y administrador, concede sus permisos,
+ * revoca UPDATE al profesor y elimina al administrador al final. Las claves se leen
+ * de las variables de entorno SISTEMA_ACADEMICO_PASS_ESTUDIANTE,
+ * SISTEMA_ACADEMICO_PASS_PROFESOR y SISTEMA_ACADEMICO_PASS_ADMIN; no se imprimen.
  *
- * Las contraseñas de las cuentas de ejemplo se pueden cambiar con las variables de
- * entorno GLOB_GUSTERS_PASS_REPORTES y GLOB_GUSTERS_PASS_MOSTRADOR; los valores por
- * defecto son los mismos del .sql.
- *
- * Requisitos: JDK 17 o superior, el driver java/lib/mariadb-java-client-3.5.3.jar (se descarga
- * una sola vez; ver README.md), un servidor MariaDB 10.2.1+ en marcha y la base glob_gusters
- * ya creada. Instalación y comandos para Windows, macOS y Linux: README.md, secciones
- * «Dependencias requeridas» y «Guía de ejecución por sistema operativo».
- * Compilación y ejecución, desde la carpeta java/:
+ * Requisitos: JDK 17 o superior, el driver MariaDB y un servidor MariaDB en marcha,
+ * con Sistema_academico ya creada. Compilación y ejecución, desde la carpeta java/:
  *     javac -encoding UTF-8 -d out *.java        (Windows PowerShell: (Get-ChildItem *.java).Name)
  *     java -cp "out:lib/*" Dcl          (Windows: java -cp "out;lib/*" Dcl)
  */
 public class Dcl {
 
     // Base de datos sobre la que se conceden los permisos.
-    static final String BD = "glob_gusters";
+    static final String BD = "Sistema_academico";
 
-    /** Cuenta de ejemplo: contraseña y privilegios concedidos. */
+    /** Cuenta y privilegios que se conceden. */
     record Cuenta(String clave, String privilegios) {}
 
-    // Cuentas de ejemplo: nombre de usuario -> datos de la cuenta.
+    // Cuentas del script: nombre de usuario -> datos de la cuenta.
     static final Map<String, Cuenta> USUARIOS = new LinkedHashMap<>();
 
-    // Bloque estático: llena el catálogo al cargar la clase. Conexion.env lee el sistema o el .env.
     static {
-        // Cuenta de solo lectura para reportes.
-        USUARIOS.put("glob_gusters_reportes",
-                new Cuenta(Conexion.env("GLOB_GUSTERS_PASS_REPORTES", "Reportes#2024"), "SELECT"));
-        // Cuenta de mostrador: puede consultar, insertar y actualizar (el DELETE se revoca abajo).
-        USUARIOS.put("glob_gusters_mostrador",
-                new Cuenta(Conexion.env("GLOB_GUSTERS_PASS_MOSTRADOR", "Mostrador#2024"), "SELECT, INSERT, UPDATE"));
+        USUARIOS.put("estudiante_user",
+                new Cuenta(Conexion.env("SISTEMA_ACADEMICO_PASS_ESTUDIANTE", null), "SELECT"));
+        USUARIOS.put("profesor_user",
+                new Cuenta(Conexion.env("SISTEMA_ACADEMICO_PASS_PROFESOR", null), "SELECT, INSERT, UPDATE"));
+        USUARIOS.put("admin_user",
+                new Cuenta(Conexion.env("SISTEMA_ACADEMICO_PASS_ADMIN", null), "ALL PRIVILEGES"));
     }
 
     public static void main(String[] args) throws SQLException {
         Conexion.configurarSalida();
-        Conexion.correr(() -> principal(args));
+        Conexion.correr(() -> principal());
     }
 
-    /** Cuerpo del programa; main lo ejecuta con Conexion.correr() para explicar tablas dañadas. */
-    private static void principal(String[] args) throws SQLException {
-        // Requiere privilegios administrativos (root) para crear usuarios y conceder permisos.
-        try (Connection con = Conexion.conectar()) {
+    /** Ejecuta las operaciones DCL en el orden del script resuelto. */
+    private static void principal() throws SQLException {
+        validarClaves();
+        try (Connection con = Conexion.conectarA(BD)) {
             for (Map.Entry<String, Cuenta> usuario : USUARIOS.entrySet()) {
-                // Cuenta completa en formato MariaDB: 'usuario'@'host'.
                 String cuenta = "'" + usuario.getKey() + "'@'localhost'";
                 Cuenta datos = usuario.getValue();
-                // La contraseña va como parámetro; el resto son nombres fijos definidos arriba.
-                Conexion.ejecutar(con, "CREATE USER IF NOT EXISTS " + cuenta + " IDENTIFIED BY ?", datos.clave());
-                // Concede los privilegios sobre todas las tablas de la base del proyecto.
-                Conexion.ejecutar(con, "GRANT " + datos.privilegios() + " ON `" + BD + "`.* TO " + cuenta);
+                Conexion.ejecutar(con,
+                        "CREATE USER IF NOT EXISTS " + cuenta + " IDENTIFIED BY ?", datos.clave());
+                Conexion.ejecutar(con,
+                        "GRANT " + datos.privilegios() + " ON `" + BD + "`.* TO " + cuenta);
                 System.out.println("Usuario " + cuenta + ": GRANT " + datos.privilegios());
             }
 
-            // El personal de mostrador no puede borrar historial de rentas.
-            Conexion.ejecutar(con, "REVOKE DELETE ON `" + BD + "`.* FROM 'glob_gusters_mostrador'@'localhost'");
-            // Recarga las tablas de permisos para que los cambios apliquen de inmediato.
-            Conexion.ejecutar(con, "FLUSH PRIVILEGES");
+            Conexion.ejecutar(con,
+                    "GRANT SELECT ON `" + BD + "`.pago TO 'estudiante_user'@'localhost'");
 
-            // Muestra los permisos finales de cada cuenta de ejemplo.
-            for (String usuario : USUARIOS.keySet()) {
-                System.out.println("\n== Privilegios de " + usuario + " ==");
-                for (Map<String, Object> fila : Conexion.consultar(con,
-                        "SHOW GRANTS FOR '" + usuario + "'@'localhost'")) {
-                    // Cada fila tiene una sola columna (con nombre variable): se toma su único valor.
-                    System.out.println(fila.values().iterator().next());
-                }
+            mostrarGrants(con, "estudiante_user");
+            mostrarGrants(con, "profesor_user");
+            mostrarGrants(con, "admin_user");
+
+            Conexion.ejecutar(con,
+                    "REVOKE UPDATE ON `" + BD + "`.* FROM 'profesor_user'@'localhost'");
+            mostrarGrants(con, "profesor_user");
+
+            Conexion.ejecutar(con, "DROP USER 'admin_user'@'localhost'");
+        }
+    }
+
+    /** Rechaza claves ausentes antes de crear o modificar cuentas. */
+    private static void validarClaves() {
+        for (Map.Entry<String, Cuenta> usuario : USUARIOS.entrySet()) {
+            if (usuario.getValue().clave() == null || usuario.getValue().clave().isBlank()) {
+                String variable = switch (usuario.getKey()) {
+                    case "estudiante_user" -> "SISTEMA_ACADEMICO_PASS_ESTUDIANTE";
+                    case "profesor_user" -> "SISTEMA_ACADEMICO_PASS_PROFESOR";
+                    default -> "SISTEMA_ACADEMICO_PASS_ADMIN";
+                };
+                throw new IllegalStateException("Define la variable de entorno " + variable + ".");
             }
+        }
+    }
+
+    private static void mostrarGrants(Connection con, String usuario) throws SQLException {
+        System.out.println("\n== Privilegios de " + usuario + " ==");
+        for (Map<String, Object> fila : Conexion.consultar(con,
+                "SHOW GRANTS FOR '" + usuario + "'@'localhost'")) {
+            System.out.println(fila.values().iterator().next());
         }
     }
 }

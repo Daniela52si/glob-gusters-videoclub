@@ -1,12 +1,11 @@
-"""VDL (View Definition Language) — equivalente a sql/mariadb/commands/04_VDL.sql.
+"""VDL (View Definition Language) — vistas de Sistema_academico.
 
-CREATE OR REPLACE VIEW de las dos vistas del proyecto y consulta de cada una.
-El DROP VIEW queda detrás de la opción --drop, igual que está comentado en el .sql:
-    python3 py/vdl.py --drop        (macOS/Linux; en Windows: python py/vdl.py --drop)
+Crea y consulta las vistas definidas en 04_VDL.sql. La vista de prueba se crea,
+consulta y elimina durante la ejecución normal; --drop elimina las vistas del script.
 
 Requisitos: Python 3.9+, el paquete PyMySQL (`pip install -r requirements.txt` dentro del
-entorno virtual .venv), un servidor MariaDB 10.2.1+ en marcha y la base glob_gusters ya
-creada. Instalación y comandos para Windows, macOS y Linux: README.md, secciones
+entorno virtual .venv), un servidor MariaDB 10.2.1+ en marcha y la base Sistema_academico
+ya creada. Instalación y comandos para Windows, macOS y Linux: README.md, secciones
 «Dependencias requeridas» y «Guía de ejecución por sistema operativo».
 Ejecución, con el entorno virtual instalado y ACTIVADO y desde la raíz del proyecto:
     python3 py/vdl.py          (macOS y Linux; en Windows: python py/vdl.py)
@@ -20,23 +19,62 @@ from conexion import conexion, consultar, ejecutar, imprimir, principal
 
 # Cada vista: nombre -> (sentencia que la crea, consulta que la verifica).
 VISTAS = {
-    # Ejemplares con título, año y estado de conservación (une tres tablas).
-    "v_ejemplares_detalle": (
-        """CREATE OR REPLACE VIEW `v_ejemplares_detalle` AS
-           SELECT e.`Ejemplar_ID`, e.`Numero` AS Numero_Ejemplar, p.`Titulo` AS Pelicula,
-                  p.`Anio`, es.`Nombre` AS Estado_Conservacion
-           FROM `ejemplar` e
-           INNER JOIN `pelicula` p ON p.`Pelicula_ID` = e.`Pelicula_ID`
-           INNER JOIN `estado` es  ON es.`Estado_ID` = e.`Estado_ID`""",
-        "SELECT * FROM `v_ejemplares_detalle` ORDER BY `Pelicula`, `Numero_Ejemplar`",
+    "vista_estudiantes_activos": (
+        """CREATE OR REPLACE VIEW vista_estudiantes_activos AS
+           SELECT EstudianteID, Nombre, Documento, email
+           FROM ESTUDIANTE
+           WHERE activo = TRUE""",
+        "SELECT * FROM vista_estudiantes_activos",
     ),
-    # Socios con el nombre de quien los avala; LEFT JOIN conserva a los que no tienen aval.
-    "v_clientes_con_aval": (
-        """CREATE OR REPLACE VIEW `v_clientes_con_aval` AS
-           SELECT c.`Cliente_ID`, c.`Nombre` AS Cliente, c.`Dni`, aval.`Nombre` AS Avalado_Por
-           FROM `cliente` c
-           LEFT JOIN `cliente` aval ON aval.`Cliente_ID` = c.`Aval_Cliente_ID`""",
-        "SELECT * FROM `v_clientes_con_aval` ORDER BY `Cliente`",
+    "vista_estudiante_programa": (
+        """CREATE OR REPLACE VIEW vista_estudiante_programa AS
+           SELECT ESTUDIANTE.Nombre AS estudiante,
+                  PROGRAMA_ACADEMICO.Nombre AS programa
+           FROM ESTUDIANTE
+           INNER JOIN PROGRAMA_ACADEMICO
+               ON ESTUDIANTE.programa_academicoID = PROGRAMA_ACADEMICO.programa_academicoID""",
+        "SELECT * FROM vista_estudiante_programa",
+    ),
+    "vista_matriculas": (
+        """CREATE OR REPLACE VIEW vista_matriculas AS
+           SELECT matricula.matriculaID,
+                  ESTUDIANTE.Nombre AS estudiante,
+                  PERIODO_ACADEMICO.nombre AS periodo,
+                  matricula.estado,
+                  matricula.total
+           FROM matricula
+           INNER JOIN ESTUDIANTE
+               ON matricula.estudianteID = ESTUDIANTE.EstudianteID
+           INNER JOIN PERIODO_ACADEMICO
+               ON matricula.periodo_academicoID = PERIODO_ACADEMICO.periodo_academicoID""",
+        "SELECT * FROM vista_matriculas",
+    ),
+    "vista_pagos": (
+        """CREATE OR REPLACE VIEW vista_pagos AS
+           SELECT ESTUDIANTE.Nombre AS estudiante,
+                  pago.total,
+                  pago.metodo_pago,
+                  pago.estado_pago
+           FROM pago
+           INNER JOIN matricula
+               ON pago.matriculaID = matricula.matriculaID
+           INNER JOIN ESTUDIANTE
+               ON matricula.estudianteID = ESTUDIANTE.EstudianteID""",
+        "SELECT * FROM vista_pagos",
+    ),
+    "vista_grupos": (
+        """CREATE OR REPLACE VIEW vista_grupos AS
+           SELECT asignatura.nombre AS asignatura,
+                  grupo.numero AS grupo,
+                  grupo.cupo,
+                  horario.dia,
+                  horario.aula
+           FROM grupo
+           INNER JOIN asignatura
+               ON grupo.asignaturaID = asignatura.asignaturaID
+           INNER JOIN horario
+               ON horario.grupoID = grupo.grupoID""",
+        "SELECT * FROM vista_grupos",
     ),
 }
 
@@ -47,15 +85,27 @@ def main(argv):
         # Con la opción --drop solo se eliminan las vistas y se termina.
         if "--drop" in argv:
             for nombre in VISTAS:
-                # Los nombres vienen de la constante VISTAS (no de datos externos).
                 ejecutar(con, f"DROP VIEW IF EXISTS `{nombre}`")
                 print(f"Vista eliminada: {nombre}")
+            ejecutar(con, "DROP VIEW IF EXISTS `vista_prueba`")
+            print("Vista eliminada: vista_prueba")
             con.commit()
             return
-        # Modo normal: crea (o reemplaza) cada vista y muestra su contenido.
+        # Crea (o reemplaza) cada vista y muestra su contenido.
         for nombre, (crear, consulta) in VISTAS.items():
             ejecutar(con, crear)
             imprimir(nombre, consultar(con, consulta))
+
+        # Consulta adicional de pagos pendientes.
+        imprimir(
+            "vista_pagos (estado_pago = 'Pendiente')",
+            consultar(con, "SELECT * FROM vista_pagos WHERE estado_pago = 'Pendiente'"),
+        )
+
+        # Crea, consulta y elimina la vista de prueba definida en 04_VDL.sql.
+        ejecutar(con, "CREATE VIEW vista_prueba AS SELECT Nombre FROM ESTUDIANTE")
+        imprimir("vista_prueba", consultar(con, "SELECT * FROM vista_prueba"))
+        ejecutar(con, "DROP VIEW vista_prueba")
         con.commit()
 
 
